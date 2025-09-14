@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaRise || Admin Management</title>
+    <link rel="stylesheet" href="../css/alert.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        // Initialize EmailJS when the page loads
+        emailjs.init("prrfmOdZMuRUcna22");
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar will be loaded here -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-wrapper">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <span class="top-title">Admin</span>
+                        <span class="dashboard-title">MANAGEMENT</span>
+                    </h1>
+                    <div class="title-divider"></div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="stats-grid" id="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <div class="stat-label">Total Admins</div>
+                            <div class="stat-number" id="total-admins">0</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <div class="stat-label">Active</div>
+                            <div class="stat-number" id="active-admins">0</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <div class="stat-label">Pending</div>
+                            <div class="stat-number" id="pending-admins">0</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <div class="stat-label">Blocked</div>
+                            <div class="stat-number" id="blocked-admins">0</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-user-times"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search and Filter Section -->
+                <div class="search-filter-container">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="search-input" placeholder="Search by name, email, or admin ID..." class="search-input">
+                    </div>
+                    <div class="filter-controls">
+                        <select id="status-filter" class="filter-select">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="pending">Pending</option>
+                            <option value="blocked">Blocked</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Bulk Actions Bar -->
+                <div id="bulk-actions-bar" class="bulk-actions-bar" style="display: none;">
+                    <div class="bulk-info">
+                        <span id="selected-count">0</span> admin(s) selected
+                    </div>
+                    <div class="bulk-buttons">
+                        <button id="bulk-delete-btn" class="btn btn-danger bulk-btn" style="display: none;">
+                            <i class="fas fa-trash"></i> Delete Pending
+                        </button>
+                        <button id="bulk-block-btn" class="btn btn-danger bulk-btn" style="display: none;">
+                            <i class="fas fa-ban"></i> Block Active
+                        </button>
+                        <button id="bulk-unblock-btn" class="btn btn-primary bulk-btn" style="display: none;">
+                            <i class="fas fa-undo"></i> Unblock
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2 class="table-title">Admins (<span id="admins-count">0</span>)</h2>
+                        <button class="btn btn-primary" onclick="openAddModal()">
+                            <i class="fas fa-plus"></i>
+                            Add Admin
+                        </button>
+                    </div>
+
+                    <div id="loading" class="loading">
+                        <div class="spinner"></div>
+                        Loading admins...
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table id="admins-table" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th class="checkbox-column">
+                                        <input type="checkbox" id="select-all-checkbox" class="admin-checkbox">
+                                    </th>
+                                    <th>Admin</th>
+                                    <th class="desktop-only">Admin ID</th>
+                                    <th class="desktop-only">Email</th>
+                                    <th>Status</th>
+                                    <th class="desktop-only">Created At</th>
+                                    <th style="text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admins-tbody">
+                                <!-- Admin rows will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="no-results" class="no-results" style="display: none;">
+                        <i class="fas fa-search"></i>
+                        <p>No admins found matching your criteria</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Admin Modal -->
+    <div id="addAdminModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Admin</h3>
+                <button class="close" onclick="closeAddModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-admin-form">
+                    <div class="form-group">
+                        <label for="admin-id">Admin ID</label>
+                        <input type="text" id="admin-id" class="form-control" readonly>
+                        <small class="form-text">Auto-generated ID</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-name">Full Name</label>
+                        <input type="text" id="admin-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-email">Email</label>
+                        <input type="email" id="admin-email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="super-admin-password">Your Password (for verification)</label>
+                        <input type="password" id="super-admin-password" class="form-control" required>
+                        <small class="form-text">Enter your Super Admin password to confirm this action</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+                <button id="add-admin-btn" class="btn btn-primary" onclick="addAdmin()">Add Admin</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Details Modal -->
+    <div id="adminDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Admin Details</h3>
+                <button class="close" onclick="closeAdminDetailsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="admin-details-content">
+                    <div class="admin-profile-section">
+                        <div id="admin-details-avatar" class="admin-details-avatar"></div>
+                        <div class="admin-profile-info">
+                            <h4 id="admin-details-name">Admin Name</h4>
+                            <p id="admin-details-email">admin@example.com</p>
+                            <span id="admin-details-status" class="badge">Status</span>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-info-grid">
+                        <div class="info-item">
+                            <label>Admin ID:</label>
+                            <span id="admin-details-id">N/A</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Role:</label>
+                            <span id="admin-details-role">Admin</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Created At:</label>
+                            <span id="admin-details-created">N/A</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Created By:</label>
+                            <span id="admin-details-created-by">N/A</span>
+                        </div>
+                        <div class="info-item" id="admin-details-blocked-section" style="display: none;">
+                            <label>Blocked At:</label>
+                            <span id="admin-details-blocked">N/A</span>
+                        </div>
+                        <div class="info-item" id="admin-details-blocked-by-section" style="display: none;">
+                            <label>Blocked By:</label>
+                            <span id="admin-details-blocked-by">N/A</span>
+                        </div>
+                        <div class="info-item" id="admin-details-last-login-section" style="display: none;">
+                            <label>Last Login:</label>
+                            <span id="admin-details-last-login">N/A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Action Confirmation Modal -->
+    <div id="bulkConfirmationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="bulk-confirmation-title">Confirm Bulk Action</h3>
+                <button class="close" onclick="closeBulkConfirmationModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="bulk-confirmation-message">Are you sure you want to proceed with this bulk action?</p>
+                <div class="form-group">
+                    <label for="bulk-confirmation-password">Your Password (for verification)</label>
+                    <input type="password" id="bulk-confirmation-password" class="form-control" required>
+                    <small class="form-text">Enter your Super Admin password to confirm this action</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeBulkConfirmationModal()">Cancel</button>
+                <button id="bulk-confirm-action-btn" class="btn btn-danger" onclick="executeBulkAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="confirmation-title">Confirm Action</h3>
+                <button class="close" onclick="closeConfirmationModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmation-message">Are you sure you want to proceed with this action?</p>
+                <div class="form-group">
+                    <label for="confirmation-password">Your Password (for verification)</label>
+                    <input type="password" id="confirmation-password" class="form-control" required>
+                    <small class="form-text">Enter your Super Admin password to confirm this action</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeConfirmationModal()">Cancel</button>
+                <button id="confirm-action-btn" class="btn btn-danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Alert -->
+    <div id="alert" class="alert" style="display: none;">
+        <span id="alert-message"></span>
+        <button class="close-alert" onclick="closeAlert()">&times;</button>
+    </div>
+
+    <style>
+        /* Admin Details Modal Styles */
+        .admin-details-content {
+            padding: 20px 0;
+        }
+
+        .admin-profile-section {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .admin-details-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            margin-right: 20px;
+            overflow: hidden;
+        }
+
+        .admin-details-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .admin-profile-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .admin-profile-info p {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .admin-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-item label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .info-item span {
+            color: #333;
+            font-size: 16px;
+        }
+
+        /* Clickable admin name and avatar styles */
+        .admin-name, .admin-avatar {
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .admin-name:hover, .admin-avatar:hover {
+            opacity: 0.8;
+        }
+
+        .admin-name {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .admin-name:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .admin-info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-profile-section {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .admin-details-avatar {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+
+    <!-- Load Firebase scripts -->
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script>
+        (function () {
+            emailjs.init("prrfmOdZMuRUcna22");
+        })();
+    </script>
+    <script type="module" src="../js/sidebar.js"></script>
+    <script type="module" src="../js/admin-management.js"></script>
+</body>
+</html>

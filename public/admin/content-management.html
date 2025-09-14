@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaRise Admin || Content Management</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <style>
+        /* Internal CSS for Class Management */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f1;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            /* margin-left: 300px; */
+            /* padding: 10px; */
+            overflow-y: auto;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content-wrapper {
+            padding: 30px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            color: #5a9025;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .title-divider {
+            width: 100%;
+            height: 2px;
+            background-color: #5a9025;
+            margin: 20px 0;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #5a9025;
+        }
+
+        .stat-icon {
+            background-color: #f9f9f1;
+            padding: 15px;
+            border-radius: 8px;
+            color: #5a9025;
+            font-size: 24px;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+            overflow-y: auto;
+            /* overflow-x: none; */
+            /* height: 500px; */
+            margin-bottom: 30px;
+        }
+
+        .table-header {
+            display: flex;
+            /* justify-content: space-between; */
+            /* align-items: center; */
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            /* flex-wrap: wrap; */
+            gap: 10px;
+            /* border: 1px solid black; */
+        }
+
+        .table-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-right: 10px;
+            /* border: 1px solid black; */
+        }
+
+        .search-container {
+            display: flex;
+            /* align-items: center; */
+            margin-left: 10px;
+            max-width: 200px;
+            width: 100%;
+            /* border: 1px solid black; */
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #5a9025;
+            box-shadow: 0 0 0 2px rgba(90, 144, 37, 0.2);
+        }
+
+        .left-header {
+            display: flex;
+            align-items: center;
+            min-width: 30%;
+        }
+
+        .table-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        /* h3, p {
+            font-family: "Libertinus Math", system-ui;
+        } */
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: #5a9025;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #4a7a1e;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #5a6268;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: #c82333;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        /* Bulk Actions */
+        #bulk-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .bulk-action-separator {
+            width: 1px;
+            height: 20px;
+            background-color: #dee2e6;
+        }
+
+        .bulk-action-info {
+            font-size: 12px;
+            color: #666;
+            margin-left: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: left;
+        }
+
+        #select-content-btn:disabled {
+            color: white;
+            background-color: #5a6268;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 4px;
+            color: #666;
+            transition: background-color 0.3s;
+        }
+
+        .btn-icon:hover {
+            background-color: #f0f0f0;
+        }
+
+        .btn-icon.delete:hover {
+            background-color: #fee;
+            color: #dc3545;
+        }
+
+        .btn-icon.view:hover {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .btn-icon.edit:hover {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        /*DITO KA MAGSTART -DAVE*/
+
+        /* select content modal style */
+        .selectContentModal {
+            display: none;
+            /* display: none; */
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        #view-modal-content {
+            position: fixed;
+            /* stays fixed at center */
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 600px;
+
+            max-height: 90vh;
+            /* keeps content inside viewport */
+            overflow-y: auto;
+            /* scroll only inside modal */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+            /*animation: slideUp 0.3s ease;*/
+        }
+
+        @media (max-width: 600px) {
+            #view-modal-content {
+                position: fixed;
+                top: 45%;
+                left: 50%;
+                width: 95%;
+                /* take almost full width */
+                height: auto;
+                max-height: 85vh;
+                /* still scroll inside modal if too tall */
+                border-radius: 8px;
+            }
+        }
+
+        .modal-header2 {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .question-limit-wrapper {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 10px;
+        }
+
+        #limit-count {
+            font-size: 14px;
+            width: 50px;
+            padding: 2px 6px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            border-radius: 8px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .modal-header {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            display: grid;
+            /* grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); */
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 5px;
+            /* space between selects */
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        #modal-title {
+            font-size: 30px;
+            font-weight: 700;
+            color: #1a5319;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        #modal-question-type {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #modal-question {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #modal-instruction {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #modal-matching-label {
+            font-size: 18px;
+            color: #333;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        #modal-choices {
+            font-size: 20px;
+            gap: 5px;
+        }
+
+        #modal-choices div {
+            /* light green bg */
+            color: #2e7d32;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        #modal-choices div:hover {
+            background: #c8e6c9;
+            transform: translateY(-2px);
+        }
+
+        #modal-choices {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        #modal-choices input {
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .modal-answer-div {
+            font-size: 20px;
+            color: white;
+            margin-top: 15px;
+            text-align: center;
+            padding: 15px;
+            background-color: #689f38;
+            border-radius: 8px;
+            min-height: 60px;
+            height: auto;
+            display: inline-block;
+            width: 100%;
+        }
+
+        pre {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+            padding: 15px;
+            overflow-x: auto;
+            overflow-y: auto;
+            /* add this to make it scroll vertically if needed */
+            white-space: pre-wrap;
+            max-height: 200px;
+            /* adjust this value as needed */
+        }
+
+        code {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .status-badge-view {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            background: #c8e6c9;
+            color: #fff;
+        }
+
+        #modal-matching {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        /* Each row */
+        .modal-matching-pair {
+            display: flex;
+            flex-direction: row;
+            gap: 5px;
+            align-items: stretch;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            ;
+        }
+
+        /* Wrapper around each input */
+        .matching-input-wrapper {
+            flex: 1 1 100%;
+            display: flex;
+        }
+
+        /* Input itself */
+        .matching-input {
+            flex: 1;
+            padding: 10px;
+            font-size: 15px;
+            resize: none;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            white-space: normal;
+            word-break: break-word;
+            text-align: center;
+            justify-content: center;
+        }
+
+        @media (min-width: 600px) {
+            .modal-matching-pair {
+                flex-direction: row;
+            }
+
+            .matching-input-wrapper {
+                flex: 1 1 0;
+            }
+        }
+
+        #matching-input-answer {
+            border: 1px solid #689f38;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #5a9025;
+            box-shadow: 0 0 0 2px rgba(90, 144, 37, 0.2);
+        }
+
+        .form-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* select content modal content style */
+        .selectContentModal-content {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #f9f9f1;
+            padding: 40px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 90%;
+            height: 90%;
+            display: flex;
+            gap: 15px;
+            /* space between sections */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            /* avoid double scrollbars */
+        }
+
+        /* Archived questions */
+        .archived-questions-div {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            /* take equal width */
+            height: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        /* Active questions */
+        .active-questions-div {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            /* take equal width */
+            height: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        /* Responsive for phones */
+        @media (max-width: 768px) {
+            .selectContentModal-content {
+                flex-direction: column;
+                height: 80%;
+                overflow-y: auto;
+            }
+
+            .archived-questions-div,
+            .active-questions-div {
+                flex: none;
+            }
+        }
+
+        .selectContent-sort {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+            margin: 2px;
+        }
+
+        .refresh-btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+            background-color: #5a9025;
+            color: white;
+            margin: 2px;
+        }
+
+        .select-active-btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+            background-color: #5a9025;
+            color: white;
+        }
+
+        .select-active-btn:disabled {
+            background-color: #5a6268;
+        }
+
+        .save-active-btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-items: center;
+            margin-right: 5px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+            background-color: #5a9025;
+            color: white;
+            width: 100%;
+        }
+
+        .save-active-btn:disabled {
+            background-color: #5a6268;
+            cursor: not-allowed;
+        }
+
+        .cancel-active-btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-items: center;
+            margin-left: 5px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+            background-color: #dc3545;
+            color: white;
+            width: 100%;
+        }
+
+        .select-active-btn:hover:not(:disabled) {
+            background-color: #4a7a1e;
+        }
+
+        .selection-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            z-index: 10;
+
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .selection-close-btn:hover {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .selection-question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Loading Spinner */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            width: 100%;
+            display: block;
+            margin-top: 25px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #5a9025;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Badge Styles */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-primary {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .badge-warning {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+
+        .badge-danger {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+
+        /* Alert Styles */
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 300px;
+            max-width: 500px;
+            z-index: 2000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .alert.success {
+            background-color: #28a745;
+        }
+
+        .alert.error {
+            background-color: #dc3545;
+        }
+
+        .alert.warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .close-alert {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 0 0 15px;
+            opacity: 0.7;
+        }
+
+        .close-alert:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .alert.hiding {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-state i,
+        .loading i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+
+        /* Question Cards */
+
+        #content-container {
+            display: flex;
+        }
+
+        #question-container {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            justify-content: center;
+            gap: 20px;
+            /* margin-bottom: 30px; */
+            padding: 30px;
+        }
+
+        .select-question-container {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 30px;
+        }
+
+        .question-card {
+            position: relative;
+            width: 100%;
+            /* max-width: 350px; */
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /*#question-checkbox {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            accent-color: #5a9025;
+        }*/
+
+        input[type="checkbox"] {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            accent-color: #5a9025;
+        }
+
+        .question-title {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .question-items {
+            /* Fixed height */
+            overflow: auto;
+            word-wrap: break-word;
+            margin-bottom: 10px;
+        }
+
+        .question-answers {
+            /* Fixed height */
+            overflow: auto;
+            word-wrap: break-word;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0px;
+            }
+
+            .content-wrapper {
+                padding: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-container {
+                margin-left: 0;
+                max-width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .table-actions {
+                justify-content: center;
+            }
+
+            #bulk-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .bulk-action-separator {
+                display: none;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            /* Hide some table columns on mobile */
+            .hide-mobile {
+                display: none !important;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th,
+            td {
+                padding: 8px 4px;
+            }
+
+            .alert {
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-wrapper {
+                padding: 10px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+
+        .modal-content::-webkit-scrollbar,
+        .active-questions-div::-webkit-scrollbar,
+        .archived-questions-div::-webkit-scrollbar {
+            width: 10px;
+            /* scrollbar width */
+        }
+
+        .modal-content::-webkit-scrollbar-track,
+        .active-questions-div::-webkit-scrollbar-track,
+        .archived-questions-div::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-top-right-radius: 8px;
+            /* round top-right */
+            border-bottom-right-radius: 8px;
+            /* round bottom-right */
+        }
+
+        .modal-content::-webkit-scrollbar-thumb,
+        .active-questions-div::-webkit-scrollbar-thumb,
+        .archived-questions-div::-webkit-scrollbar-thumb {
+            background: gray;
+            border-top-right-radius: 8px;
+            /* round top-right */
+            border-bottom-right-radius: 8px;
+            /* round bottom-right */
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover,
+        .active-questions-div::-webkit-scrollbar-thumb:hover,
+        .archived-questions-div::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <!-- Sidebar will be loaded here -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-wrapper">
+                <header class="page-header">
+                    <h1 class="page-title">
+                        <span class="top-title">Content</span>
+                        <span class="dashboard-title">MANAGEMENT</span>
+                    </h1>
+                    <div class="title-divider"></div>
+                </header>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Total Chapters</div>
+                            <div class="stat-number" id="total-chapters">...</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Total Levels</div>
+                            <div class="stat-number" id="total-levels">...</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-arrow-circle-up"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Total Tests</div>
+                            <div class="stat-number" id="total-tests">...</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fa fa-pencil-square"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="left-header">
+                            <h2 class="table-title">Chapter List</h2>
+                            <div class="search-container">
+                                <select id="chapter-input" class="search-input">
+                                </select>
+                            </div>
+
+                            <h2 class="table-title" id="chapter-title" style="display: none;">Chapter Title</h2>
+                            <div class="search-container">
+                                <select id="subchap-input" class="search-input">
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="bulk-actions">
+                            <button id="select-content-btn" class="btn btn-primary" onclick="openSelectContentModal()"
+                                title="Please Select A Chapter And SubChapter First">
+                                <i class="fas fa-plus"></i>
+                                Select Content
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div id="loading" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Loading Content...</p>
+                    </div>
+
+                    <div id="select-chap-subchap" class="loading" style="display: none;">
+                        <i class="fas fa-book"></i>
+                        <h3>Select a Chapter <br> and Sub Chapter</h3>
+                    </div>
+
+                    <div id="empty-state" class="empty-state" style="display: none;">
+                        <i class="fas fa-question-circle"></i>
+                        <h3>No Questions Found!</h3>
+                    </div>
+
+                    <div id="content-container">
+                        <div id="question-container">
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Select Content Modal -->
+    <div id="select-content-modal" class="selectContentModal">
+        <div class="selectContentModal-content">
+            <!-- Close button -->
+            <span class="selection-close-btn" onclick="closeSelectContentModal()">&times;</span>
+
+            <div class="archived-questions-div">
+                <div class="modal-header2">
+                    <h3 class="modal-title">Archived Questions
+                        <span id="archived-counter" style="font-size:14px; color:gray;">(0)</span>
+                    </h3>
+
+                    <button id="refresh-btn" class="refresh-btn" onclick="resetFilter()">
+                        <i class="fas fa-refresh"></i> Reset
+                    </button>
+                </div>
+
+                <div class="modal-header">
+                    <select id="question-type" class="selectContent-sort">
+                        <option value="">-- All Types --</option>
+                        <option value="multipleChoice">Multiple Choice</option>
+                        <option value="trueOrFalse">True/False</option>
+                        <option value="matchingType">Matching Type</option>
+                        <option value="debugging">Debugging</option>
+                    </select>
+
+                    <select id="creator" class="selectContent-sort">
+                        <option value="">-- All Admin --</option>
+                    </select>
+
+                    <select id="sortByChapter" class="selectContent-sort">
+                        <option value="">-- All Chapter --</option>
+                    </select>
+
+                    <select id="sortByLesson" class="selectContent-sort" disabled>
+                        <option value="">-- All Lesson --</option>
+                    </select>
+
+                    <p></p>
+
+                </div>
+
+                <div id="arc-loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Loading Questions...</p>
+                </div>
+
+                <div id="arc-empty-state" class="empty-state" style="display: none;">
+                    <i class="fas fa-question-circle"></i>
+                    <h3>No Questions Available!</h3>
+                </div>
+
+                <div id="select-arcquestion-container" class="select-question-container">
+                    <!-- <div class="question-card" id="question-card">
+
+                    </div> -->
+                </div>
+
+            </div>
+
+            <div class="active-questions-div">
+                <div class="modal-header2">
+                    <h3 class="modal-title">Active Questions</h3>
+                    <div class="question-limit-wrapper">
+                        <span id="current-count">0</span> /
+                        <input id="limit-count" type="number" min="1" max="20" />
+                        <span id="limit-text" style="display:none;"></span>
+                    </div>
+                </div>
+
+                <div class="modal-header2">
+                    <p></p>
+                    <!-- Select button -->
+                    <button id="bulk-select-btn" class="select-active-btn">
+                        <i class="fas fa-plus"></i> Select
+                    </button>
+
+                    <!-- Save button (hidden by default) -->
+                    <button id="save-btn" class="save-active-btn" style="display:none;">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+
+                    <!-- Cancel button (hidden by default) -->
+                    <button id="cancel-btn" class="cancel-active-btn" style="display:none;">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+
+                <div id="act-loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Loading Questions...</p>
+                </div>
+
+                <div id="act-empty-state" class="empty-state" style="display: none;">
+                    <i class="fas fa-question-circle"></i>
+                    <h3>No Active Questions!</h3>
+                </div>
+
+                <div id="select-actquestion-container" class="select-question-container">
+                    <!-- <div class="question-card" id="question-card">
+
+                    </div> -->
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content" id="view-modal-content">
+            <span style="display: flex; justify-content: space-between; align-items: center;">
+                <span id="modal-status" class="status-badge-view"></span>
+                <span class="close-btn">&times;</span>
+            </span>
+
+            <h2 id="modal-title"></h2>
+
+            <p id="modal-question-type"></p>
+
+            <p id="modal-instruction"></p>
+
+            <p id="modal-question"></p>
+
+            <div id="modal-choices">
+                <input type="text" id="modal-choice1" class="form-control" readonly>
+                <input type="text" id="modal-choice2" class="form-control" readonly>
+                <input type="text" id="modal-choice3" class="form-control" readonly>
+                <input type="text" id="modal-choice4" class="form-control" readonly>
+            </div>
+
+            <p id="modal-matching-label"></p>
+
+            <div id="modal-matching">
+                <div id="modal-matching-pairs"></div>
+            </div>
+
+            <div class="modal-answer-div">
+                <p id="modal-answer"></p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Alert -->
+    <div id="alert" class="alert" style="display: none;">
+        <span id="alert-message"></span>
+        <button class="close-alert" onclick="closeAlert()">&times;</button>
+    </div>
+
+    <!-- Load Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Load sidebar first, then other scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script>
+        (function () {
+            emailjs.init("prrfmOdZMuRUcna22");
+        })();
+    </script>
+    <script type="module" src="../js/sidebar.js"></script>
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/content-management.js"></script>
+</body>
+
+</html>

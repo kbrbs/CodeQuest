@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaRise Admin || Class Management</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+    <style>
+        /* Internal CSS for Class Management */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f1;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            /* margin-left: 300px; */
+            /* padding: 10px; */
+            overflow-y: auto;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content-wrapper {
+            padding: 30px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            color: #5a9025;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .title-divider {
+            width: 100%;
+            height: 2px;
+            background-color: #5a9025;
+            margin: 20px 0;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #5a9025;
+        }
+
+        .stat-icon {
+            background-color: #f9f9f1;
+            padding: 15px;
+            border-radius: 8px;
+            color: #5a9025;
+            font-size: 24px;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .table-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            margin-right: auto;
+            margin-left: 20px;
+            max-width: 300px;
+            width: 100%;
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #5a9025;
+            box-shadow: 0 0 0 2px rgba(90, 144, 37, 0.2);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* h3, p {
+            font-family: "Libertinus Math", system-ui;
+        } */
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: #5a9025;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #4a7a1e;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #5a6268;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: #c82333;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        /* Bulk Actions */
+        #bulk-actions {
+            display: none;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .bulk-action-separator {
+            width: 1px;
+            height: 20px;
+            background-color: #dee2e6;
+        }
+
+        .bulk-action-info {
+            font-size: 12px;
+            color: #666;
+            margin-left: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .class-row {
+            transition: background-color 0.2s;
+        }
+
+        .class-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .class-row.selected {
+            background-color: #e3f2fd !important;
+        }
+
+        .class-checkbox,
+        input[type="checkbox"] {
+            cursor: pointer;
+            accent-color: #5a9025;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: left;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 4px;
+            color: #666;
+            transition: background-color 0.3s;
+        }
+
+        .btn-icon:hover {
+            background-color: #f0f0f0;
+        }
+
+        .btn-icon.delete:hover {
+            background-color: #fee;
+            color: #dc3545;
+        }
+
+        .btn-icon.view:hover {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .btn-icon.edit:hover {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: white;
+            /* margin: 5% auto; */
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #5a9025;
+            box-shadow: 0 0 0 2px rgba(90, 144, 37, 0.2);
+        }
+
+        .form-text {
+            font-size: 12px;
+            color: #6c757d;
+            /* margin-top: 5px; */
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #5a9025;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Badge Styles */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-primary {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .badge-warning {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+
+        .badge-danger {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        /* Class Code Display */
+        .class-code {
+            font-family: monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Alert Styles */
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 300px;
+            max-width: 500px;
+            z-index: 2000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .alert.success {
+            background-color: #28a745;
+        }
+
+        .alert.error {
+            background-color: #dc3545;
+        }
+
+        .alert.warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .close-alert {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 0 0 15px;
+            opacity: 0.7;
+        }
+
+        .close-alert:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .alert.hiding {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
+        /* Student List Styles */
+        .student-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .student-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .student-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #5a9025;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .student-info {
+            flex: 1;
+        }
+
+        .student-name {
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .student-email {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .student-progress {
+            font-size: 12px;
+            color: #5a9025;
+            font-weight: 500;
+        }
+
+        .no-students {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Copy Button */
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #5a9025;
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 14px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: #4a7a1e;
+            background-color: #f0f0f0;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0px;
+            }
+
+            .content-wrapper {
+                padding: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-container {
+                margin-left: 0;
+                max-width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .table-actions {
+                justify-content: center;
+            }
+
+            #bulk-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .bulk-action-separator {
+                display: none;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            /* Hide some table columns on mobile */
+            .hide-mobile {
+                display: none !important;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th,
+            td {
+                padding: 8px 4px;
+            }
+
+            .alert {
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-wrapper {
+                padding: 10px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+
+        .qr-form-group {
+            margin-top: 25px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        #class-qr,
+        #edit-class-qr {
+            display: flex;
+            text-align: center;
+            justify-content: center;
+            /* border: 1px solid black; */
+            padding: 10px;
+        }
+
+        #download-qr-btn {
+            display: block;
+            width: 50%;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 10px;
+            /* scrollbar width */
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-top-right-radius: 8px;
+            /* round top-right */
+            border-bottom-right-radius: 8px;
+            /* round bottom-right */
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: gray;
+            border-top-right-radius: 8px;
+            /* round top-right */
+            border-bottom-right-radius: 8px;
+            /* round bottom-right */
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Sidebar will be loaded here -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-wrapper">
+                <header class="page-header">
+                    <h1 class="page-title">
+                        <span class="top-title">Class</span>
+                        <span class="dashboard-title">MANAGEMENT</span>
+                    </h1>
+                    <div class="title-divider"></div>
+                </header>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Total Classes</div>
+                            <div class="stat-number" id="total-classes">0</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-chalkboard"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Total Students</div>
+                            <div class="stat-number" id="total-students">0</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Active Classes</div>
+                            <div class="stat-number" id="active-classes">0</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Classes Table -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2 class="table-title">Class List</h2>
+                        <div class="search-container">
+                            <input type="text" id="search-input" class="search-input" placeholder="Search classes...">
+                        </div>
+                        <div id="bulk-actions">
+                            <span id="selected-count">0 selected</span>
+                            <div class="bulk-action-separator"></div>
+                            <button id="bulk-delete-btn" class="btn btn-danger" onclick="openBulkDeleteModal()">
+                                <i class="fas fa-trash"></i>
+                                Delete Selected
+                                <!-- <span class="bulk-action-info" id="delete-count-info">(0)</span> -->
+                            </button>
+                            <button class="btn btn-secondary" onclick="clearSelection()">
+                                <i class="fas fa-times"></i>
+                                Clear
+                            </button>
+                        </div>
+                        <div class="table-actions">
+                            <button class="btn btn-secondary" onclick="exportClasses()">
+                                <i class="fas fa-download"></i>
+                                <span class="hide-mobile">Export CSV</span>
+                            </button>
+                            <button class="btn btn-primary" onclick="openAddClassModal()">
+                                <i class="fas fa-plus"></i>
+                                Add New Class
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Actions -->
+
+
+                    <div id="loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading classes...</p>
+                    </div>
+
+                    <div id="empty-state" class="empty-state" style="display: none;">
+                        <i class="fas fa-chalkboard"></i>
+                        <h3>No Classes Found</h3>
+                        <p>No classes match your current search.</p>
+                    </div>
+
+                    <table id="classes-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="select-all" onchange="toggleSelectAll()"
+                                        style="cursor: pointer;">
+                                </th>
+                                <th>Class Name</th>
+                                <th>Class Code</th>
+                                <th>Students</th>
+                                <th class="hide-mobile">Created Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="classes-tbody">
+                            <!-- Classes will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Class Modal -->
+    <div id="add-class-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Class</h3>
+                <!-- <button class="close" onclick="closeAddClassModal()">&times;</button> -->
+            </div>
+            <div class="modal-body">
+                <form id="add-class-form">
+                    <div class="form-group">
+                        <label for="class-name">Class Name (Section)</label>
+                        <input type="text" id="class-name" class="form-control" placeholder="e.g. BSIT 3D G2" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="instructor-name">Instructor Name</label>
+                        <input type="text" id="instructor-name" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="class-code">Class Code</label>
+                        <input type="text" id="class-code" class="form-control" readonly>
+                        <small class="form-text">Auto-generated code for students to join</small>
+                    </div>
+                    <div id="class-qr" class="mt-2 text-center"></div>
+                    <div class="form-group">
+                        <label for="admin-password">Your Password (for verification)</label>
+                        <input type="password" id="admin-password" class="form-control" required>
+                        <small class="form-text">Enter your password to confirm this action</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddClassModal()">Cancel</button>
+                <button id="add-class-btn" class="btn btn-primary" onclick="addClass()">Create Class</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Class Modal -->
+    <div id="edit-class-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Class</h3>
+                <!-- <button class="close" onclick="closeEditClassModal()">&times;</button> -->
+            </div>
+            <div class="modal-body">
+                <form id="edit-class-form">
+                    <input type="hidden" id="edit-class-id">
+                    <div class="form-group">
+                        <label for="edit-class-name">Class Name (Section)</label>
+                        <input type="text" id="edit-class-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-instructor-name">Instructor Name</label>
+                        <input type="text" id="edit-instructor-name" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-class-code">Class Code</label>
+                        <input type="text" id="edit-class-code" class="form-control" readonly>
+                        <small class="form-text">Class code cannot be changed</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-admin-password">Your Password (for verification)</label>
+                        <input type="password" id="edit-admin-password" class="form-control" required>
+                        <small class="form-text">Enter your password to confirm this action</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditClassModal()">Cancel</button>
+                <button id="edit-class-btn" class="btn btn-primary" onclick="updateClass()">Update Class</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Students Modal -->
+    <div id="view-students-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Students in <span id="view-class-name"></span></h3>
+                <!-- <button class="close" onclick="closeViewStudentsModal()">&times;</button> -->
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Class Code: <span id="view-class-code" class="class-code"></span>
+                        <button class="copy-btn" onclick="copyClassCode()" title="Copy to clipboard">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </label>
+                    <small class="form-text">Share this code with students to join the class</small>
+                </div>
+                <div class="qr-form-group">
+                    <label>Class QR Code</label>
+                    <small class="form-text">Auto-generated code for students to join</small>
+                    <div id="edit-class-qr" style="margin: 10px auto;"></div>
+                    <button type="button" id="download-qr-btn" class="btn btn-sm btn-primary mt-2">
+                        Download QR
+                    </button>
+                </div>
+
+                <div id="students-loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading students...</p>
+                </div>
+
+                <div id="students-container" style="display: none;">
+                    <h4>Enrolled Students (<span id="student-count">0</span>)</h4>
+                    <ul id="student-list" class="student-list">
+                        <!-- Students will be loaded here -->
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeViewStudentsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Delete Class</h3>
+                <!-- <button class="close" onclick="closeDeleteModal()">&times;</button> -->
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the class "<span id="delete-class-name"></span>"?</p>
+                <p>This will remove all class data and cannot be undone.</p>
+
+                <div class="form-group">
+                    <label for="delete-admin-password">Your Password (for verification)</label>
+                    <input type="password" id="delete-admin-password" class="form-control" required>
+                    <small class="form-text">Enter your password to confirm this action</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button id="delete-class-btn" class="btn btn-danger" onclick="deleteClass()">Delete Class</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Delete Confirmation Modal -->
+    <div id="bulk-delete-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Bulk Delete Classes</h3>
+                <!-- <button class="close" onclick="closeBulkDeleteModal()">&times;</button> -->
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to permanently delete <span id="bulk-delete-count">0</span> selected classes?
+                </p>
+                <p><strong>This action cannot be undone and will delete all class data including enrolled
+                        students.</strong></p>
+
+                <div class="form-group">
+                    <label for="admin-password-bulk-delete">Your Password (for verification)</label>
+                    <input type="password" id="admin-password-bulk-delete" class="form-control" required>
+                    <small class="form-text">Enter your password to confirm this action</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeBulkDeleteModal()">Cancel</button>
+                <button id="confirm-bulk-delete-btn" class="btn btn-danger" onclick="confirmBulkDelete()">Delete
+                    Classes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert -->
+    <div id="alert" class="alert" style="display: none;">
+        <span id="alert-message"></span>
+        <button class="close-alert" onclick="closeAlert()">&times;</button>
+    </div>
+
+    <!-- Load Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Load sidebar and class management scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script>
+        (function () {
+            emailjs.init("prrfmOdZMuRUcna22");
+        })();
+    </script>
+    <script type="module" src="../js/sidebar.js"></script>
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/class-management.js"></script>
+</body>
+
+</html>

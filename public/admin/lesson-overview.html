@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaRise Admin || Lesson Overview</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <style>
+        /* Internal CSS for Lesson Overview */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f1;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            /* margin-left: 300px; */
+            /* padding: 10px; */
+            overflow-y: auto;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content-wrapper {
+            padding: 30px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            color: #5a9025;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .title-divider {
+            width: 100%;
+            height: 2px;
+            background-color: #5a9025;
+            margin: 20px 0;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #5a9025;
+        }
+
+        .stat-icon {
+            background-color: #f9f9f1;
+            padding: 15px;
+            border-radius: 8px;
+            color: #5a9025;
+            font-size: 24px;
+        }
+
+        /* Table Styles */
+        .table-container2 {
+            background: white;
+            border-radius: 0 8px 8px 8px;
+            /* border-top-left-radius: none; */
+            overflow: hidden;
+            /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            overflow-y: auto;
+            /* overflow-x: none; */
+            /* height: 500px; */
+            margin-bottom: 30px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .table-info {
+            display: flex;
+            flex-direction: column;
+            padding: 20px 20px 0px;
+            /* border-bottom: 1px solid #e0e0e0; */
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .viewLesson-table-info {
+            display: flex;
+            flex-direction: column;
+            /* border-bottom: 1px solid #e0e0e0; */
+            flex-wrap: wrap;
+            gap: 5px;
+            /* padding: 0px 10px 0px; */
+        }
+
+        .table-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table-desc {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            text-indent: 100px;
+            text-align: justify;
+            padding: 10px 20px 0px;
+        }
+
+        .viewLesson-table-desc {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            text-indent: 80px;
+            text-align: justify;
+            padding: 10px;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            margin-right: auto;
+            margin-left: 20px;
+            max-width: 200px;
+            width: 100%;
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+            min-width: 300px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #5a9025;
+            box-shadow: 0 0 0 2px rgba(90, 144, 37, 0.2);
+        }
+
+        .table-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        /* h3, p {
+            font-family: "Libertinus Math", system-ui;
+        } */
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: #5a9025;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #4a7a1e;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #5a6268;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: #c82333;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        /* Bulk Actions */
+        #bulk-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .bulk-action-separator {
+            width: 1px;
+            height: 20px;
+            background-color: #dee2e6;
+        }
+
+        .bulk-action-info {
+            font-size: 12px;
+            color: #666;
+            margin-left: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .class-row {
+            transition: background-color 0.2s;
+        }
+
+        .class-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .class-row.selected {
+            background-color: #e3f2fd !important;
+        }
+
+        .class-checkbox {
+            cursor: pointer;
+            accent-color: #5a9025;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: left;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 4px;
+            color: #666;
+            transition: background-color 0.3s;
+        }
+
+        .btn-icon:hover {
+            background-color: #f0f0f0;
+        }
+
+        .btn-icon.delete:hover {
+            background-color: #fee;
+            color: #dc3545;
+        }
+
+        .btn-icon.view:hover {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .btn-icon.edit:hover {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        #addLesson-modal-content {
+            position: fixed;
+            /* stays fixed at center */
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 700px;
+
+            max-height: 90vh;
+            /* keeps content inside viewport */
+            overflow-y: auto;
+            /* scroll only inside modal */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+            /*animation: slideUp 0.3s ease;*/
+        }
+
+        .form-row1 {
+            display: flex;
+            /* push left & right */
+            gap: 20px;
+            /* spacing between the two groups */
+            width: 100%;
+        }
+
+        .another-form-row1 {
+            display: flex;
+            justify-content: space-between;
+            /* push left & right */
+            gap: 20px;
+            /* spacing between the two groups */
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        #lesson-id,
+        #chapter-id {
+            width: 100px;
+            /* fixed input width */
+            height: 40px;
+            text-align: center;
+        }
+
+        #under-chap-id {
+            width: 100px;
+            /* fixed input width */
+            height: 40px;
+            text-align: center;
+        }
+
+        .form-group.inline-label1 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 185px;
+            /* flex: 1; */
+        }
+
+        .form-group.inline-label2 {
+            display: flex;
+            align-items: center;
+
+            /* flex: 1; */
+        }
+
+        #addChapter-modal-content {
+            position: fixed;
+            /* stays fixed at center */
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 700px;
+
+            max-height: 90vh;
+            /* keeps content inside viewport */
+            overflow-y: auto;
+            /* scroll only inside modal */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+            /*animation: slideUp 0.3s ease;*/
+        }
+
+        .addChapter-addLesson {
+            display: block;
+            font-weight: 500;
+            color: #333;
+        }
+
+        #viewLesson-modal-content {
+            position: fixed;
+            /* stays fixed at center */
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 1000px;
+
+            max-height: 90vh;
+            /* keeps content inside viewport */
+            overflow-y: auto;
+            /* scroll only inside modal */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+            /*animation: slideUp 0.3s ease;*/
+        }
+
+        @media (max-width: 768px) {
+            #viewLesson-modal-content {
+                top: 45%;
+                /* move modal to center on smaller screens */
+            }
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .viewLesson-modal-body {
+            padding: 20px;
+            max-height: 45vh;
+            /* fixed height relative to viewport */
+            overflow-y: auto;
+            /* enable vertical scroll */
+            overflow-x: hidden;
+            /* prevent horizontal scroll */
+            box-sizing: border-box;
+            border: 1px solid #e0e0e0;
+            margin: 10px;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #5a9025;
+            box-shadow: 0 0 0 2px rgba(90, 144, 37, 0.2);
+        }
+
+        .form-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            width: 100%;
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #5a9025;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Badge Styles */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-primary {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .badge-warning {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+
+        .badge-danger {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        /* Class Code Display */
+        .class-code {
+            font-family: monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Alert Styles */
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 300px;
+            max-width: 500px;
+            z-index: 2000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .alert.success {
+            background-color: #28a745;
+        }
+
+        .alert.error {
+            background-color: #dc3545;
+        }
+
+        .alert.warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .close-alert {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 0 0 15px;
+            opacity: 0.7;
+        }
+
+        .close-alert:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .alert.hiding {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
+        /* Student List Styles */
+        .student-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .student-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .student-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #5a9025;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .student-info {
+            flex: 1;
+        }
+
+        .student-name {
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .student-email {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .student-progress {
+            font-size: 12px;
+            color: #5a9025;
+            font-weight: 500;
+        }
+
+        .no-students {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Copy Button */
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #5a9025;
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 14px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: #4a7a1e;
+            background-color: #f0f0f0;
+        }
+
+        /* Empty State */
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+
+        /* Question Cards */
+
+        /* #content-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        } */
+
+        #lesson-container {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        
+
+        .lesson-card {
+            position: relative;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .lesson-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        #lesson-checkbox {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .lesson-label {
+            margin-bottom: 10px;
+            /* border: 1px solid black; */
+        }
+
+        .lesson-title {
+            margin-bottom: 10px;
+            /* border: 1px solid black; */
+        }
+
+        .lesson-preview-holder {
+            width: 100%;
+            height: 178px;
+            /* set a fixed height for consistency */
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lesson-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .slides-holder {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            width: 100%;
+        }
+
+        .slides-preview {
+            width: 100%;
+            height: auto;
+            max-height: 180px;
+            object-fit: contain;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            background: #fff;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0px;
+            }
+
+            .content-wrapper {
+                padding: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-container {
+                margin-left: 0;
+                max-width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: stretch;
+
+                gap: 15px;
+            }
+
+            .table-actions {
+                justify-content: center;
+            }
+
+            #bulk-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .bulk-action-separator {
+                display: none;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            /* Hide some table columns on mobile */
+            .hide-mobile {
+                display: none !important;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th,
+            td {
+                padding: 8px 4px;
+            }
+
+            .alert {
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-wrapper {
+                padding: 10px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+
+        .lesson-overview-tabs {
+            display: flex;
+            align-items: center;
+            /* gap: 20px; */
+        }
+
+        .lesson-overview-tabs h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            /* rounded top corners */
+            transition: background 0.2s, color 0.2s;
+            background: #e0e0e0;
+        }
+
+        .lesson-overview-tabs h1:hover {
+            background: #f5f5f5;
+            color: #1a5319;
+        }
+
+        .lesson-overview-tabs h1.active {
+            background: #fff;
+            color: #5a9025;
+            /* border: 1px solid #ddd; */
+            /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+            border: 1px solid #e0e0e0;
+            border-bottom: none;
+        }
+
+        .modal-content::-webkit-scrollbar,
+        .viewLesson-modal-body::-webkit-scrollbar {
+            width: 10px;
+            /* scrollbar width */
+        }
+
+        .modal-content::-webkit-scrollbar-track,
+        .viewLesson-modal-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-top-right-radius: 8px;
+            /* round top-right */
+            border-bottom-right-radius: 8px;
+            /* round bottom-right */
+        }
+
+        .modal-content::-webkit-scrollbar-thumb,
+        .viewLesson-modal-body::-webkit-scrollbar-thumb {
+            background: gray;
+            border-top-right-radius: 8px;
+            /* round top-right */
+            border-bottom-right-radius: 8px;
+            /* round bottom-right */
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover,
+        .viewLesson-modal-body::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        textarea {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #lesson-card {
+            display: none;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <!-- Sidebar will be loaded here -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-wrapper">
+                <header class="page-header">
+                    <h1 class="page-title">
+                        <span class="top-title">Lesson</span>
+                        <span class="dashboard-title">OVERVIEW</span>
+                    </h1>
+                    <div class="title-divider"></div>
+                </header>
+
+                <div class="lesson-overview-tabs">
+                    <h1 class="active" id="chapters">List of Chapters</h1>
+                    <h1 id="chapter-content">Chapter-Content</h1>
+                </div>
+
+                <!-- LIST OF CHAPTER -->
+                <div class="table-container2" id="forDefault" style="display: block;">
+                    <div class="table-header">
+                        <h2 class="table-title">Chapter</h2>
+                        <div class="search-container">
+                            <select id="chapter-input" class="search-input">
+                                <!-- <option value="">-- Select a Chapter --</option> -->
+                            </select>
+                        </div>
+
+                        <button id="select-content-btn" class="btn btn-primary" onclick="openAddChapterModal()">
+                            <i class="fas fa-plus"></i>
+                            Add Chapter
+                        </button>
+
+                        <button id="select-content-btn" class="btn btn-primary" onclick="openAddLessonModal()">
+                            <i class="fas fa-plus"></i>
+                            Add Lesson
+                        </button>
+                    </div>
+
+                    <div class="table-info">
+                        <h2 class="table-title" id="chapter-title">All Chapters</h2>
+                        <h3 class="table-desc" id="chapter-desc">Lessons From Every Chapter</h3>
+                    </div>
+
+                    <!-- <div id="loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading Lessons...</p>
+                    </div> -->
+
+                    <div id="lesson-container">
+
+                        <div class="lesson-card" id="lesson-card">
+                            <h2 class="lesson-label" id="lesson-label">
+
+                            </h2>
+                            <h3 class="lesson-title" id="lesson-title">
+
+                            </h3>
+                            <div class="lesson-preview-holder" id="lesson-preview-holder">
+                                <img src="../img/logo.jpeg" alt="Sample Image" class="lesson-preview">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- CUSTOM CHAPTER -->
+                <div class="table-container2" id="forCustoms" style="display: none;">
+                    <div class="table-header">
+                        <h2 class="table-title">Chapter</h2>
+                        <div class="search-container">
+                            <select id="chapter-content-input" class="search-input">
+                                <!-- <option value="">-- Select a Chapter --</option> -->
+                            </select>
+                        </div>
+
+                        <button id="select-content-btn" class="btn btn-primary" onclick="">
+                            Select Chapter & Lesson
+                        </button>
+                    </div>
+
+                    <div class="table-info">
+                        <h2 class="table-title" id="chapter-content-title">Program Control Structure 1</h2>
+                        <h3 class="table-desc" id="chapter-content-desc">This chapter builds on the foundational logic
+                            skills
+                            from the previous topic by introducing the key programming constructs that allow you to make
+                            decisions and control the flow of your code. You'll learn how to write programs that can
+                            choose between different actions based on specific conditions. We'll explore two essential
+                            types of selection structures, which are the fundamental tools for creating dynamic and
+                            responsive applications. Mastering these structures is crucial for writing any program that
+                            needs to adapt to various inputs or situations.</h3>
+                    </div>
+
+                    <!-- <div id="loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading Lessons...</p>
+                    </div> -->
+
+                    <!-- <div id="custom-content-container">
+                        <div id="custom-lesson-container">
+                            <div class="lesson-card" id="custom-lesson-card">
+                                <h2 class="lesson-label" id="custom-lesson-label">
+                                    Lesson 1
+                                </h2>
+                                <h3 class="lesson-title" id="custom-lesson-title">
+                                    The If / If-Else Statement
+                                </h3>
+                                <div class="lesson-preview-holder" id="lesson-preview-holder">
+                                    <img src="../img/logo.jpeg" alt="Sample Image" class="lesson-preview">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="lesson-container">
+                            <div class="lesson-card" id="lesson-card">
+                                <h2 class="lesson-label" id="lesson-label">
+                                    Lesson 1
+                                </h2>
+                                <h3 class="lesson-title" id="lesson-title">
+                                    The If / If-Else Statement
+                                </h3>
+                                <div class="lesson-preview-holder" id="lesson-preview-holder">
+                                    <img src="../img/logo.jpeg" alt="Sample Image" class="lesson-preview">
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Elrizza Manalili -->
+    <div id="viewLessonModal" class="modal">
+        <!-- <div id="viewLessonModal" class="modal" style="display: block;"> -->
+        <div class="modal-content" id="viewLesson-modal-content">
+            <span style="display: flex; justify-content: space-between; align-items: center;">
+                <span></span>
+                <span class="close-btn" onclick="">&times;</span>
+            </span>
+
+            <div class="viewLesson-table-info">
+                <h2 class="viewLesson-table-title" id="view-lesson-title">Lesson 1 - The If / If-Else Statement</h2>
+                <h3 class="viewLesson-table-desc" id="view-lesson-desc">This lesson introduces the most common control
+                    structure for decision-making in programming. You'll learn how to use the if statement to execute a
+                    block of code only when a certain condition is true. We'll then explore the if-else statement, which
+                    provides an alternative path of execution for when the condition is false. This lesson will teach
+                    you how to create simple, logical branches in your code.</h3>
+            </div>
+
+            <div class="viewLesson-modal-body">
+                <div class="slides-holder" id="slides-holder">
+                </div>
+            </div>
+
+            <div class="form-group inline-label">
+                <label for="file-link">File Link</label>
+                <a id="file-link" href="#" class="btn btn-link" target="_blank">No file uploaded</a>
+                <!-- <input type="text" id="file-link" class="form-control" readonly> -->
+            </div>
+        </div>
+    </div>
+
+    <div id="addChapterModal" class="modal">
+        <div class="modal-content" id="addChapter-modal-content">
+            <span style="display: flex; justify-content: space-between; align-items: center;">
+                <span></span>
+                <!-- <span class="close-btn">&times;</span> -->
+            </span>
+
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Chapter</h3>
+                <!-- <button class="close" onclick="closeAddQuestionModal()">&times;</button> -->
+            </div>
+
+            <div class="modal-body">
+                <form id="add-chapter-form">
+
+                    <!-- chapter No (auto-generated) -->
+                    <div class="form-row1">
+                        <div class="form-group inline-label1">
+                            <label for="chapter-id">Chapter No.</label>
+                            <input type="number" id="chapter-id" class="form-control" min="1">
+                        </div>
+                    </div>
+
+                    <!-- chapter Title -->
+                    <div class="form-group">
+                        <label for="chapter-field">Chapter Title</label>
+                        <input type="text" id="chapter-title-field" class="form-control">
+                    </div>
+
+                    <!-- chapter Description -->
+                    <div class="form-group">
+                        <label for="chapter-desc-field">Chapter Description</label>
+                        <textarea id="chapter-desc-field" class="form-control" placeholder="Provide Description"
+                            rows="5"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <p id="addChapter-addLesson" class="addChapter-addLesson"><u>Add Lesson</u></p>
+                    </div>
+
+                    <!-- ETO YUNG KAPAG NACLICK NA YUNG ADD LESSON SA ADD CHAPTER
+                    NASA IISANG MODAL LANG SILA. PAG NICLICK MO LANG LALABAS YUNG PANG ADD LESSON.
+                    BALI JS YUNG MAKAPAGPAPALITAW
+                    PAG DI NI CLICK YUNG ADD LESSON, YUNG PANG ADD CHAPTER LANG NA FIELDS YUNG LALABAS
+                    TAS MAWAWALA NA YUNG BUTTON NG ADD LESSON -->
+
+                    <!-- <div class="another-form-row1">
+                        <div class="form-group inline-label1">
+                            <label for="lesson-id">Lesson No.</label>
+                            <input type="text" id="lesson-id" class="form-control" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lesson-field">Lesson Title</label>
+                        <input type="text" id="lesson-field" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lesson-desc-field">Lesson Description</label>
+                        <textarea id="lesson-desc-field" class="form-control" placeholder="Provide Description"
+                            rows="5"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lesson-upload">Lesson Upload</label>
+                        <input type="file" accept=".pdf,.pptx" id="lesson-upload">
+                    </div> -->
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddChapterModal()">Cancel</button>
+                <button id="add-question-btn" class="btn btn-primary" onclick="saveChapter()">Add Chapter</button>
+            </div>
+
+            <!-- KASAMA TONG FOOTER. ETO NA MAGIGING FOOTER PAG NACLICK YUNG ADD LESSON -->
+            <!-- <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="">Cancel</button>
+                <button id="add-question-btn" class="btn btn-primary" onclick="">Add Lesson & Chapter</button>
+            </div> -->
+        </div>
+    </div>
+
+    <div id="addLessonModal" class="modal">
+        <div class="modal-content" id="addLesson-modal-content">
+            <span style="display: flex; justify-content: space-between; align-items: center;">
+                <span></span>
+                <!-- <span class="close-btn" onclick="closeAddLessonModal()">&times;</span> -->
+            </span>
+
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Lesson</h3>
+                <!-- <button class="close" onclick="closeAddQuestionModal()">&times;</button> -->
+            </div>
+
+            <div class="modal-body">
+                <form id="add-lesson-form">
+
+                    <!-- Lesson No (auto-generated) -->
+                    <div class="form-row1">
+                        <div class="form-group inline-label1">
+                            <label for="lesson-id">Lesson No.</label>
+                            <input type="number" id="lesson-id" class="form-control" min="1">
+                        </div>
+
+                        <div class="form-group inline-label2">
+                            <label for="under-chap-id">Under Chapter</label>
+                            <div class="search-container">
+                                <select id="add-lesson-chapter-input" class="search-input">
+                                    <!-- <option value="">-- Select a Chapter --</option> -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lesson Title -->
+                    <div class="form-group">
+                        <label for="lesson-field">Lesson Title</label>
+                        <input type="text" id="lesson-field" class="form-control">
+                    </div>
+
+                    <!-- Lesson Description -->
+                    <div class="form-group">
+                        <label for="lesson-desc-field">Lesson Description</label>
+                        <textarea id="lesson-desc-field" class="form-control" placeholder="Provide Description"
+                            rows="5"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lesson-upload">Lesson Upload</label>
+                        <input type="file" accept=".pdf,.pptx" id="lesson-upload">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Upload Progress</label>
+                        <p id="upload-status" style="font-size: 14px; color: #555;">No file uploaded yet.</p>
+                        <div id="upload-preview"
+                            style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px;">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddLessonModal()">Cancel</button>
+                <button id="add-question-btn" class="btn btn-primary" onclick="saveLesson()">Add Lesson</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert -->
+    <div id="alert" class="alert" style="display: none;">
+        <span id="alert-message"></span>
+        <button class="close-alert" onclick="closeAlert()">&times;</button>
+    </div>
+
+    <!-- PDFJS LIB -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- Load Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Load sidebar first, then other scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script>
+        (function () {
+            emailjs.init("prrfmOdZMuRUcna22");
+        })();
+    </script>
+    <script type="module" src="../js/sidebar.js"></script>
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/lesson-overview.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaRise || Super Admin Dashboard</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9f9f1;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .page-header {
+            /* box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); */
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .title-divider {
+            width: 100%;
+            height: 2px;
+            background-color: #5a9025;
+            margin: 20px 0;
+        }
+
+        /* Metrics Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+            border-left: 4px solid #5a9025;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #5a9025;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .metric-change {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .metric-change.positive {
+            background: rgba(90, 144, 37, 0.1);
+            color: #5a9025;
+        }
+
+        .metric-change.negative {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-btn {
+            background: #5a9025;
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .action-btn:hover {
+            background: #4a7a1f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(90, 144, 37, 0.3);
+        }
+
+        /* Recent Activities */
+        .activities-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #5a9025;
+        }
+
+        .see-all-link {
+            color: #5a9025;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+
+        .see-all-link:hover {
+            color: #4a7a1f;
+        }
+
+        .activities-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .activities-table th,
+        .activities-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .activities-table th {
+            background: #5a9025;
+            color: white;
+            font-weight: 600;
+        }
+
+        .activities-table tr:hover {
+            background: rgba(90, 144, 37, 0.05);
+        }
+
+        .activity-action {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .activity-action.register {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+        }
+
+        .activity-action.login {
+            background: rgba(33, 150, 243, 0.1);
+            color: #2196f3;
+        }
+
+        .activity-action.create {
+            background: rgba(255, 152, 0, 0.1);
+            color: #ff9800;
+        }
+
+        .activity-action.add {
+            background: rgba(156, 39, 176, 0.1);
+            color: #9c27b0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+            color: #5a9025;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 10px;
+            width: 95%;
+            max-width: 1200px;
+            height: 90vh;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            background: #5a9025;
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .close {
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .modal-body {
+            padding: 2rem;
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 200px 150px;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: end;
+        }
+
+        .search-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .search-input,
+        .search-select {
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus,
+        .search-select:focus {
+            outline: none;
+            border-color: #5a9025;
+        }
+
+        .clear-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #d32f2f;
+        }
+
+        .activities-container {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+
+        .modal-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .modal-table th {
+            background: #f5f5f5;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 2px solid #e0e0e0;
+            font-weight: 600;
+            color: #333;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .modal-table th:hover {
+            background: #eeeeee;
+        }
+
+        .modal-table th .sort-icon {
+            margin-left: 0.5rem;
+            opacity: 0.5;
+        }
+
+        .modal-table th.sorted .sort-icon {
+            opacity: 1;
+            color: #5a9025;
+        }
+
+        .modal-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .modal-table tr:hover {
+            background: rgba(90, 144, 37, 0.05);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .results-count {
+            margin-bottom: 1rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .activities-table {
+                font-size: 0.9rem;
+            }
+
+            .activities-table th,
+            .activities-table td {
+                padding: 0.5rem;
+            }
+
+            .modal-content {
+                width: 98%;
+                height: 95vh;
+                margin: 1% auto;
+            }
+
+            .search-controls {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .modal-table th,
+            .modal-table td {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Sidebar will be loaded here -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                    <h1 class="page-title">
+                        <span class="top-title">Admin</span>
+                        <span class="dashboard-title">MANAGEMENT</span>
+                    </h1>
+                <div class="title-divider"></div>
+            </div>
+
+            <!-- Key Metrics -->
+            <section class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="metric-value" id="total-students">-</div>
+                    <div class="metric-label">Total Active Students</div>
+                    <div class="metric-change positive" id="students-change">Loading...</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div class="metric-value" id="total-admins">-</div>
+                    <div class="metric-label">Total Admins</div>
+                    <div class="metric-change positive" id="admins-change">Loading...</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-school"></i>
+                    </div>
+                    <div class="metric-value" id="total-classes">-</div>
+                    <div class="metric-label">Total Classes Created</div>
+                    <div class="metric-change positive" id="classes-change">Loading...</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-question"></i>
+                    </div>
+                    <div class="metric-value" id="total-content">-</div>
+                    <div class="metric-label">Total Questions/Contents</div>
+                    <div class="metric-change positive" id="content-change">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Action Buttons -->
+            <section class="action-buttons">
+                <button class="action-btn" onclick="addAdmin()">
+                    <i class="fas fa-user-plus"></i>
+                    Add Admin
+                </button>
+                <button class="action-btn" onclick="createClass()">
+                    <i class="fas fa-plus-circle"></i>
+                    Manage Class
+                </button>
+                <button class="action-btn" onclick="addContent()">
+                    <i class="fas fa-file-plus"></i>
+                    Add Content
+                </button>
+                <button class="action-btn" onclick="exportReports()">
+                    <i class="fas fa-download"></i>
+                    Export Reports
+                </button>
+                <button class="action-btn" onclick="systemSettings()">
+                    <i class="fas fa-cogs"></i>
+                    System Settings
+                </button>
+            </section>
+
+            <!-- Recent Activities -->
+            <section class="activities-section">
+                <div style="display: flex; justify-content: space-between;">
+                    <h2 class="section-title">
+                        <i class="fas fa-history"></i>
+                        Recent Activities
+                    </h2>
+                    <span class="see-all-link" onclick="seeAll()">See all</span>
+                </div>
+                <div id="activities-loading" class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading recent activities...</p>
+                </div>
+                <table class="activities-table" id="activities-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Action</th>
+                            <th>User</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activities-tbody">
+                        <!-- Activities will be loaded here -->
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <!-- Activities Modal -->
+    <div id="activitiesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-history"></i>
+                    All Recent Activities
+                </h2>
+                <span class="close" onclick="closeActivitiesModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="search-controls">
+                    <div class="search-group">
+                        <label for="searchGeneral">Search All Fields</label>
+                        <input type="text" id="searchGeneral" class="search-input" placeholder="Search activities...">
+                    </div>
+                    <div class="search-group">
+                        <label for="searchDate">Search by Date</label>
+                        <input type="date" id="searchDate" class="search-input">
+                    </div>
+                    <div class="search-group">
+                        <label for="filterAction">Filter by Action</label>
+                        <select id="filterAction" class="search-select">
+                            <option value="">All Actions</option>
+                        </select>
+                    </div>
+                    <div class="search-group">
+                        <label>&nbsp;</label>
+                        <button class="clear-btn" onclick="clearFilters()">Clear Filters</button>
+                    </div>
+                </div>
+                
+                <div class="results-count" id="resultsCount"></div>
+                
+                <div class="activities-container">
+                    <div id="modal-loading" class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p>Loading all activities...</p>
+                    </div>
+                    <table class="modal-table" id="modal-activities-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('timestamp')">
+                                    Timestamp
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th onclick="sortTable('action')">
+                                    Action
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th onclick="sortTable('user')">
+                                    User
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th onclick="sortTable('description')">
+                                    Description
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-activities-tbody">
+                            <!-- All activities will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load sidebar first, then other scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script>
+        (function () {
+            emailjs.init("prrfmOdZMuRUcna22");
+        })();
+    </script>
+    <script type="module" src="../js/sidebar.js"></script>
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/dashboard.js"></script>
+</body>
+
+</html>

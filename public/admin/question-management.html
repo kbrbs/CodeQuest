@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaRise Admin || Question Management</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <style>
+        /* Internal CSS for Question Management */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f1;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            /* margin-left: 300px; */
+            /* padding: 10px; */
+            overflow-y: auto;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content-wrapper {
+            padding: 30px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            color: #5a9025;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .title-divider {
+            width: 100%;
+            height: 2px;
+            background-color: #5a9025;
+            margin: 20px 0;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #5a9025;
+        }
+
+        .stat-icon {
+            background-color: #f9f9f1;
+            padding: 15px;
+            border-radius: 8px;
+            color: #5a9025;
+            font-size: 24px;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+            overflow-y: auto;
+            /* overflow-x: none; */
+            /* height: 500px; */
+            margin-bottom: 30px;
+        }
+
+        /* Header container */
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            /* flex-wrap: wrap; */
+        }
+
+        /* Left side: Title + Dropdown */
+        .left-header {
+            display: flex;
+            align-items: center;
+            /* width: 30%; */
+            /* border: 1px solid black; */
+            /* flex: 1; */
+            /* take available space */
+            min-width: 30%;
+            /* prevents it from shrinking too small */
+        }
+
+        .left-header2 {
+            display: flex;
+            align-items: center;
+            /* width: 30%; */
+            gap: 10px;
+            /* flex: 1; */
+            /* take available space */
+            min-width: 40%;
+            /* prevents it from shrinking too small */
+        }
+
+        .table-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            width: 50%;
+            /* border: 1px solid green; */
+        }
+
+        /* Right side: Search + Filter */
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            /* keeps buttons/inputs readable */
+        }
+
+        /* @media (max-width: 768px) {
+            .table-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .left-header,
+            .right-header {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .left-header h2 {
+                flex-shrink: 0;
+            }
+
+            .search-input,
+            .btn {
+                flex: 1;
+            }
+        } */
+
+        /* Inputs (dropdowns + search) */
+        .search-input {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            border-color: #1976d2;
+            box-shadow: 0 0 4px rgba(25, 118, 210, 0.4);
+        }
+
+        #search-bar {
+            width: 220px;
+        }
+
+        #filter-type {
+            width: 160px;
+        }
+
+        /* Bulk actions section */
+        .table-header2 {
+            display: flex;
+            /* justify-content: space-between; */
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 15px;
+            border: 1px solid black;
+        }
+
+        /* h3, p {
+            font-family: "Libertinus Math", system-ui;
+        } */
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: #5a9025;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #4a7a1e;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #5a6268;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: #c82333;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        /* Bulk Actions */
+        #bulk-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .bulk-action-separator {
+            width: 1px;
+            height: 20px;
+            background-color: #dee2e6;
+        }
+
+        .bulk-action-info {
+            font-size: 12px;
+            color: #666;
+            margin-left: 5px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: left;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 4px;
+            color: #666;
+            transition: background-color 0.3s;
+        }
+
+        .btn-icon:hover {
+            background-color: #f0f0f0;
+        }
+
+        .btn-icon.delete:hover {
+            background-color: #fee;
+            color: #dc3545;
+        }
+
+        .btn-icon.view:hover {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .btn-icon.edit:hover {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+
+        /* Modal Styles */
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Modal Box */
+        .modal-content {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+            background-color: white;
+            padding: 0;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+            animation: slideUp 0.3s ease;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 600px) {
+            .modal-content {
+                position: fixed;
+                top: 45%;
+                left: 50%;
+                width: 95%;
+                height: auto;
+                max-height: 85vh;
+                border-radius: 8px;
+            }
+        }
+
+        #view-modal-content {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 600px;
+
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+            /*animation: slideUp 0.3s ease;*/
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 600px) {
+            #view-modal-content {
+                position: fixed;
+                top: 45%;
+                left: 50%;
+                width: 95%;
+                height: auto;
+                max-height: 85vh;
+                border-radius: 8px;
+            }
+        }
+
+        #modal-title {
+            font-size: 30px;
+            font-weight: 700;
+            color: #1a5319;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        #modal-question-type {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #modal-question {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #modal-instruction {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #modal-matching-label {
+            font-size: 18px;
+            color: #333;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        #modal-choices {
+            font-size: 20px;
+            gap: 5px;
+        }
+
+        #modal-choices div {
+            /* light green bg */
+            color: #2e7d32;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        #modal-choices div:hover {
+            background: #c8e6c9;
+            transform: translateY(-2px);
+        }
+
+        .modal-answer-div {
+            font-size: 20px;
+            color: white;
+            margin-top: 15px;
+            text-align: center;
+            padding: 15px;
+            background-color: #689f38;
+            border-radius: 8px;
+            min-height: 60px;
+            height: auto;
+            display: inline-block;
+            width: 100%;
+        }
+
+        #matching-input-answer {
+            border: 1px solid #689f38;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .status-badge-view {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            background: #c8e6c9;
+            color: #fff;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        #question-id {
+            width: auto;
+            flex: 1;
+            max-width: 100px;
+            display: inline-block;
+            height: 40px;
+            margin-bottom: 2px;
+            margin-top: 2px;
+            text-align: center;
+        }
+
+        .form-group.inline-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group.inline-label label {
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: inline-block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        #default-selection-group {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+
+        #set-default-selection{
+            accent-color: #5a9025;
+        }
+
+        #default-selection-group label {
+            margin-left: 6px;
+            font-size: 0.9rem;
+            color: #444;
+            cursor: pointer;
+        }
+
+        .form-control {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+            margin-bottom: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #5a9025;
+            box-shadow: 0 0 0 2px rgba(90, 144, 37, 0.2);
+        }
+
+        .form-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        #choices-section {
+            margin-bottom: 8px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0px;
+        }
+
+        #choices-section label {
+            display: flex;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        #choices-section textarea {
+            width: 49%;
+            box-sizing: border-box;
+        }
+
+        #modal-matching {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        /* Each row */
+        .modal-matching-pair {
+            display: flex;
+            flex-direction: row;
+            gap: 5px;
+            align-items: stretch;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            ;
+        }
+
+        /* Wrapper around each input */
+        .matching-input-wrapper {
+            flex: 1 1 100%;
+            display: flex;
+        }
+
+        /* Input itself */
+        .matching-input {
+            flex: 1;
+            padding: 10px;
+            font-size: 15px;
+            resize: none;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            white-space: normal;
+            word-break: break-word;
+            text-align: center;
+            justify-content: center;
+        }
+
+        @media (min-width: 600px) {
+            .modal-matching-pair {
+                flex-direction: row;
+            }
+
+            .matching-input-wrapper {
+                flex: 1 1 0;
+            }
+        }
+
+        #modal-choices {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        #modal-choices input {
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        #matching-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0px;
+        }
+
+        #matching-section button {
+            margin-bottom: 10px;
+        }
+
+        #matching-section label {
+            display: flex;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        #matching-section textarea {
+            width: 49%;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+        }
+
+        #dragdrop-choices,
+        #dragdrop-answers {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+        }
+
+        #dragdrop-choices textarea,
+        #dragdrop-answers {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #dragdrop-section button {
+            margin-bottom: 10px;
+        }
+
+        /* For Chrome, Edge, Safari */
+        .modal-content::-webkit-scrollbar {
+            width: 10px;
+            /* scrollbar width */
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-top-right-radius: 8px;
+            /* round top-right */
+            border-bottom-right-radius: 8px;
+            /* round bottom-right */
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: gray;
+            border-top-right-radius: 8px;
+            /* round top-right */
+            border-bottom-right-radius: 8px;
+            /* round bottom-right */
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            width: 100%;
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #5a9025;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }*/
+
+        /* Badge Styles */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-primary {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .badge-warning {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+
+        .badge-danger {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        /* Class Code Display */
+        .class-code {
+            font-family: monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Alert Styles */
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 300px;
+            max-width: 500px;
+            z-index: 2000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease-out;
+            background-color: #dc3545;
+        }
+
+        .alert.success {
+            background-color: #28a745;
+        }
+
+        .alert.error {
+            background-color: #dc3545;
+        }
+
+        .alert.warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .close-alert {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 0 0 15px;
+            opacity: 0.7;
+        }
+
+        .close-alert:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .alert.hiding {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
+        /* Student List Styles */
+        .student-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .student-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .student-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #5a9025;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .student-info {
+            flex: 1;
+        }
+
+        .student-name {
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .student-email {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .student-progress {
+            font-size: 12px;
+            color: #5a9025;
+            font-weight: 500;
+        }
+
+        .no-students {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Copy Button */
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #5a9025;
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 14px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: #4a7a1e;
+            background-color: #f0f0f0;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+
+        /* Question Cards */
+
+        #content-container {
+            display: flex;
+        }
+
+        #question-container {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 30px;
+        }
+
+        /*.question-card {
+            position: relative;
+            width: 350px;
+            height: 280px;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-sizing: border-box;
+        }*/
+
+        .question-card {
+            position: relative;
+            width: 100%;
+            /* max-width: 350px; */
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        #question-checkbox {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+
+        }
+
+        .question-title {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .question-items {
+            /* height: 60px; */
+            overflow: auto;
+            word-wrap: break-word;
+            margin-bottom: 10px;
+        }
+
+        .question-answers {
+            max-height: 100%;
+            /* optional: limit height if needed */
+            overflow-wrap: break-word;
+            /* better word break */
+            word-wrap: break-word;
+            /* fallback */
+            overflow: visible;
+            /* allow full content to show */
+            margin-bottom: 10px;
+        }
+
+        pre {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+            padding: 15px;
+            overflow-x: auto;
+            overflow-y: auto;
+            /* add this to make it scroll vertically if needed */
+            white-space: pre-wrap;
+            max-height: 200px;
+            /* adjust this value as needed */
+        }
+
+        code {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+        }
+
+        .modal {
+            display: none;
+            /* Hide by default */
+            position: fixed;
+            z-index: 1050;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background: rgba(0, 0, 0, 0.6);
+            /* Dark overlay */
+        }
+
+        .modal-content {
+            background: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 50%;
+            max-width: 700px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-header,
+        .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0px;
+            }
+
+            .content-wrapper {
+                padding: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-container {
+                margin-left: 0;
+                max-width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .table-actions {
+                justify-content: center;
+            }
+
+            #bulk-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .bulk-action-separator {
+                display: none;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            /* Hide some table columns on mobile */
+            .hide-mobile {
+                display: none !important;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th,
+            td {
+                padding: 8px 4px;
+            }
+
+            .alert {
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-wrapper {
+                padding: 10px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+
+        .modal-btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+            background-color: #5a9025;
+            color: white;
+        }
+
+        textarea {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <!-- Sidebar will be loaded here -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-wrapper">
+                <header class="page-header">
+                    <h1 class="page-title">
+                        <span class="top-title">Question</span>
+                        <span class="dashboard-title">MANAGEMENT</span>
+                    </h1>
+                    <div class="title-divider"></div>
+                </header>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Active Questions</div>
+                            <div class="stat-number" id="active-questions"></div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-square-check"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Archived Questions</div>
+                            <div class="stat-number" id="archived-questions"></div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-box-archive"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Total Questions</div>
+                            <div class="stat-number" id="total-questions"></div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <!-- Left side: Title + Chapter dropdown -->
+                        <div class="left-header">
+                            <h2 class="table-title">Added By: </h2>
+
+                            <select id="sortByAdmin" class="search-input">
+                                <option value="">-- All Admin --</option>
+                            </select>
+                        </div>
+
+                        <!-- Right side: Search + Filter -->
+                        <div class="right-header">
+                            <input type="text" id="search-bar" class="search-input" placeholder="Search questions...">
+
+                            <select id="question-type" class="search-input">
+                                <option value="">-- All Types --</option>
+                                <option value="multipleChoice">Multiple Choice</option>
+                                <option value="trueOrFalse">True/False</option>
+                                <option value="matchingType">Matching Type</option>
+                                <option value="debugging">Debugging</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-header">
+                        <!-- Select All button -->
+                        <!-- <button class="btn btn-primary" onclick="selectAllRows()">
+                            <i class="fas fa-check-square"></i> Select All
+                        </button> -->
+
+                        <div class="left-header2">
+                            <h2 class="table-title">Filter By: </h2>
+                            <select id="chapter-input" class="search-input">
+                                <option value="">-- All Chapter --</option>
+                            </select>
+                            <select id="lesson-input" class="search-input" disabled>
+                                <option value="">-- All Lesson --</option>
+                            </select>
+                        </div>
+
+                        <div class="right-header">
+                            <button class="btn btn-primary" onclick="openAddQuestionModal()">
+                                <i class="fas fa-plus"></i>
+                                Add New Question
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="loading" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Loading Questions...</p>
+                    </div>
+
+                    <div id="empty-state" class="empty-state" style="display: none;">
+                        <i class="fas fa-question-circle"></i>
+                        <h3>No Questions Found!</h3>
+                    </div>
+
+                    <div id="content-container">
+                        <div id="question-container">
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="require-admin-password" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Admin Password Preference</h3>
+            </div>
+
+            <div class="modal-body">
+                <p>
+                    How would you like to handle admin password prompts when adding or modifying questions?
+                    <br><br>
+                    Choosing <strong style="color: #1a5319;">Always Ask</strong> will prompt for the admin password
+                    every time.
+                    <br>
+                    Choosing <strong style="color: #1a5319;">Ask Once</strong> will require the admin password only once
+                    per session.
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <div class="form-group">
+                    <label for="admin-password">Your Password (for verification)</label>
+                    <input type="password" id="admin-password-preference" class="form-control" required>
+                </div> <br><br>
+
+                <button onclick="verifyAndSetPreference('always')" class="modal-btn">
+                    Always Ask
+                </button>
+                <button onclick="verifyAndSetPreference('once')" class="modal-btn">
+                    Ask Once
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Add Question Modal -->
+    <div id="add-question-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Question</h3>
+                <!-- <button class="close" onclick="closeAddQuestionModal()">&times;</button> -->
+            </div>
+
+            <div class="modal-body">
+                <form id="add-question-form">
+
+                    <!-- Question No (auto-generated) -->
+                    <div class="form-group inline-label">
+                        <label for="question-id">Question ID</label>
+                        <input type="text" id="question-id" class="form-control" readonly>
+                    </div>
+
+                    <!-- Chapter -->
+                    <div class="form-group">
+                        <label for="under-chapter">Under Chapter</label>
+                        <select id="under-chapter" class="form-control" required>
+                            <option value="">-- Select Chapter --</option>
+                        </select>
+                    </div>
+
+                    <!-- Lesson -->
+                    <div class="form-group">
+                        <label for="under-lesson">Under Lesson</label>
+                        <select id="under-lesson" class="form-control" required>
+                            <option value="">-- Select Lesson --</option>
+                        </select>
+                    </div>
+
+                    <div id="default-selection-group" style="display: block;">
+                        <input type="checkbox" id="set-default-selection">
+                        <label for="set-default-selection">Set this Chapter & Lesson as default</label>
+                    </div>
+
+                    <!-- Question Type -->
+                    <div class="form-group">
+                        <label for="question-type">Question Type</label>
+                        <select id="add-question-type" class="form-control" onchange="handleQuestionTypeChange()">
+                            <option value="">-- Select Type --</option>
+                            <option value="multipleChoice">Multiple Choice</option>
+                            <option value="trueOrFalse">True/False</option>
+                            <option value="matchingType">Matching Type</option>
+                            <option value="debugging">Debugging</option>
+                        </select>
+                    </div>
+
+                    <!-- Instruction -->
+                    <div class="form-group" id="instruction-field-group">
+                        <label for="question-instruction">Instructions</label>
+                        <textarea id="instruction-field" class="form-control" placeholder="Provide Instruction"
+                            rows="3"></textarea>
+                    </div>
+
+                    <!-- Matching Type Section (hidden by default) -->
+                    <div id="matching-section" style="display: none; margin-top: 15px;">
+                        <label>Matching Pairs</label>
+
+                        <div id="matching-pairs">
+                            <!-- Default 2 pairs -->
+                            <div class="matching-pair d-flex mb-2">
+                                <textarea class="form-control mr-2 matching-question" placeholder="Question 1"
+                                    rows="3"></textarea>
+                                <textarea class="form-control matching-answer" placeholder="Answer 1"
+                                    rows="3"></textarea>
+                            </div>
+                            <div class="matching-pair d-flex mb-2">
+                                <textarea class="form-control mr-2 matching-question" placeholder="Question 2"
+                                    rows="3"></textarea>
+                                <textarea class="form-control matching-answer" placeholder="Answer 2"
+                                    rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addMatchingPair()">
+                            <i class="fas fa-plus"></i> Add More
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeMatchingPair()">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+
+                    </div>
+
+                    <!-- Question Text -->
+                    <div id="question-text-form" class="form-group">
+                        <label for="question-text">Question</label>
+                        <textarea id="question-text" class="form-control" rows="7" required></textarea>
+                    </div>
+
+                    <!-- Answer -->
+                    <div id="answer-text-form" class="form-group">
+                        <label for="question-answer">Answer</label>
+                        <input type="text" id="question-answer" class="form-control" required>
+                    </div>
+
+                    <!-- Choices Section (hidden by default) -->
+                    <div id="choices-section" style="display: none;">
+                        <label>Choices</label>
+                        <textarea id="choice1" class="form-control" placeholder="Choice 1" rows="3"></textarea>
+                        <textarea id="choice2" class="form-control" placeholder="Choice 2" rows="3"></textarea>
+                        <textarea id="choice3" class="form-control" placeholder="Choice 3" rows="3"></textarea>
+                        <textarea id="choice4" class="form-control" placeholder="Choice 4" rows="3"></textarea>
+                    </div>
+
+                    <!-- Drag & Drop Section (hidden by default) -->
+                    <div id="dragdrop-section" style="display: none; margin-top: 15px;">
+                        <!-- Question Statement -->
+                        <div class="form-group">
+                            <label for="dragdrop-statement">Question Statement</label>
+                            <textarea id="dragdrop-statement" class="form-control" rows="7"
+                                placeholder="Use '@' as blanks (e.g. The quick brown @ jumps over the lazy @)"></textarea>
+                            <small class="form-text text-muted">Use '@' for each blank space.</small>
+                        </div>
+
+                        <!-- Answers (auto-generated from '@' count) -->
+                        <div class="form-group">
+                            <label>Answers</label>
+                            <div id="dragdrop-answers"></div>
+                        </div>
+
+                        <!-- Choices Section -->
+                        <div class="form-group">
+                            <label>Choices</label>
+                            <div id="dragdrop-choices">
+                                <div class="choice-item d-flex mb-2">
+                                    <textarea class="form-control choice-input" placeholder="Choice 1"
+                                        rows="3"></textarea>
+                                </div>
+                                <div class="choice-item d-flex mb-2">
+                                    <textarea class="form-control choice-input" placeholder="Choice 2"
+                                        rows="3"></textarea>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2"
+                                onclick="addDragDropChoice()">
+                                <i class="fas fa-plus"></i> Add Choice
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger mt-2"
+                                onclick="removeDragDropChoice()">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+
+                        <!-- Complete Statement -->
+                        <div class="form-group">
+                            <label for="dragdrop-complete">Complete Statement</label>
+                            <textarea id="dragdrop-complete" class="form-control" rows="7"
+                                placeholder="The quick brown fox jumps over the lazy dog." readonly></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Created By (auto-fill with logged-in admin) -->
+                    <div class="form-group">
+                        <label for="created-by">Created By</label>
+                        <input type="text" id="created-by" class="form-control" readonly>
+                    </div>
+
+                    <!-- Password Verification -->
+                    <div class="form-group" id="admin-password-verification">
+                        <label for="admin-password">Your Password (for verification)</label>
+                        <input type="password" id="admin-password" class="form-control" required>
+                        <small class="form-text">Enter your password to confirm this action</small>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddQuestionModal()">Cancel</button>
+                <button id="add-question-btn" class="btn btn-primary" onclick="addQuestion()">Add Question</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content" id="view-modal-content">
+            <span style="display: flex; justify-content: space-between; align-items: center;">
+                <span id="modal-status" class="status-badge-view"></span>
+                <span class="close-btn">&times;</span>
+            </span>
+
+            <h2 id="modal-title"></h2>
+
+            <p id="modal-question-type"></p>
+
+            <p id="modal-instruction"></p>
+
+            <p id="modal-question"></p>
+
+            <div id="modal-choices">
+                <input type="text" id="modal-choice1" class="form-control" readonly>
+                <input type="text" id="modal-choice2" class="form-control" readonly>
+                <input type="text" id="modal-choice3" class="form-control" readonly>
+                <input type="text" id="modal-choice4" class="form-control" readonly>
+            </div>
+
+            <p id="modal-matching-label"></p>
+
+            <div id="modal-matching">
+                <div id="modal-matching-pairs"></div>
+            </div>
+
+            <div class="modal-answer-div">
+                <p id="modal-answer"></p>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- Alert -->
+    <div id="alert" class="alert" style="display: none;">
+        <span id="alert-message"></span>
+        <button class="close-alert" onclick="closeAlert()">&times;</button>
+    </div>
+
+    <!-- Load Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Load sidebar first, then other scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script>
+        (function () {
+            emailjs.init("prrfmOdZMuRUcna22");
+        })();
+    </script>
+    <script type="module" src="../js/sidebar.js"></script>
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/question-management.js"></script>
+</body>
+
+</html>
