@@ -477,11 +477,12 @@
 
         .modal-answer-div {
             font-size: 20px;
-            color: white;
             margin-top: 15px;
             text-align: center;
             padding: 15px;
-            background-color: #689f38;
+            background-color: white;
+            color: #5a9025;
+            border: 2px solid #5a9025;
             border-radius: 8px;
             min-height: 60px;
             height: auto;
@@ -565,6 +566,17 @@
             text-align: center;
         }
 
+        #edit-question-id {
+            width: auto;
+            flex: 1;
+            max-width: 100px;
+            display: inline-block;
+            height: 40px;
+            margin-bottom: 2px;
+            margin-top: 2px;
+            text-align: center;
+        }
+
         .form-group.inline-label {
             display: flex;
             align-items: center;
@@ -595,7 +607,7 @@
             margin-bottom: 15px;
         }
 
-        #set-default-selection{
+        #set-default-selection {
             accent-color: #5a9025;
         }
 
@@ -645,7 +657,27 @@
             gap: 0px;
         }
 
+        #edit-choices-section {
+            margin-bottom: 8px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0px;
+        }
+
+        #edit-choices-section textarea {
+            width: 49%;
+            box-sizing: border-box;
+        }
+
         #choices-section label {
+            display: flex;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        #edit-choices-section label {
             display: flex;
             margin-bottom: 10px;
             font-weight: 500;
@@ -723,7 +755,17 @@
             gap: 0px;
         }
 
+        #edit-matching-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0px;
+        }
+
         #matching-section button {
+            margin-bottom: 10px;
+        }
+
+        #edit-matching-section button {
             margin-bottom: 10px;
         }
 
@@ -735,7 +777,21 @@
             font-size: 14px;
         }
 
+        #edit-matching-section label {
+            display: flex;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
         #matching-section textarea {
+            width: 49%;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+        }
+
+        #edit-matching-section textarea {
             width: 49%;
             box-sizing: border-box;
             margin-bottom: 5px;
@@ -1304,6 +1360,14 @@
             color: white;
         }
 
+        .modal-edit-footer {
+            padding: 20px 0px 10px 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         textarea {
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
         }
@@ -1429,6 +1493,7 @@
         </main>
     </div>
 
+    <!-- Admin Password Preference -->
     <div id="require-admin-password" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
@@ -1463,6 +1528,47 @@
         </div>
     </div>
 
+    <!-- View Question Modal -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content" id="view-modal-content">
+            <span style="display: flex; justify-content: space-between; align-items: center;">
+                <span id="modal-status" class="status-badge-view"></span>
+                <span class="close-btn">&times;</span>
+            </span>
+
+            <h2 id="modal-title"></h2>
+
+            <p id="modal-question-type"></p>
+
+            <p id="modal-instruction"></p>
+
+            <p id="modal-question"></p>
+
+            <div id="modal-choices">
+                <input type="text" id="modal-choice1" class="form-control" readonly>
+                <input type="text" id="modal-choice2" class="form-control" readonly>
+                <input type="text" id="modal-choice3" class="form-control" readonly>
+                <input type="text" id="modal-choice4" class="form-control" readonly>
+            </div>
+
+            <p id="modal-matching-label"></p>
+
+            <div id="modal-matching">
+                <div id="modal-matching-pairs"></div>
+            </div>
+
+            <div class="modal-answer-div">
+                <p id="modal-answer"></p>
+            </div>
+
+            <div class="modal-edit-footer">
+                <button class="modal-btn" id="edit-question-btn">
+                    Edit Question
+                </button>
+            </div>
+
+        </div>
+    </div>
 
     <!-- Add Question Modal -->
     <div id="add-question-modal" class="modal">
@@ -1641,39 +1747,135 @@
         </div>
     </div>
 
-    <!-- Modal -->
-    <div id="questionModal" class="modal">
-        <div class="modal-content" id="view-modal-content">
-            <span style="display: flex; justify-content: space-between; align-items: center;">
-                <span id="modal-status" class="status-badge-view"></span>
-                <span class="close-btn">&times;</span>
-            </span>
-
-            <h2 id="modal-title"></h2>
-
-            <p id="modal-question-type"></p>
-
-            <p id="modal-instruction"></p>
-
-            <p id="modal-question"></p>
-
-            <div id="modal-choices">
-                <input type="text" id="modal-choice1" class="form-control" readonly>
-                <input type="text" id="modal-choice2" class="form-control" readonly>
-                <input type="text" id="modal-choice3" class="form-control" readonly>
-                <input type="text" id="modal-choice4" class="form-control" readonly>
+    <!-- Edit Question Modal -->
+    <div id="edit-question-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Question</h3>
             </div>
 
-            <p id="modal-matching-label"></p>
+            <div class="modal-body">
+                <form id="edit-question-form">
 
-            <div id="modal-matching">
-                <div id="modal-matching-pairs"></div>
+                    <!-- Question ID (readonly) -->
+                    <div class="form-group inline-label">
+                        <label for="edit-question-id">Question ID</label>
+                        <input type="text" id="edit-question-id" class="form-control" readonly>
+                        <input type="hidden" id="edit-doc-id">
+                    </div>
+
+                    <!-- Chapter -->
+                    <div class="form-group">
+                        <label for="edit-under-chapter">Under Chapter</label>
+                        <select id="edit-under-chapter" class="form-control" required>
+                            <option value="">-- Select Chapter --</option>
+                        </select>
+                    </div>
+
+                    <!-- Lesson -->
+                    <div class="form-group">
+                        <label for="edit-under-lesson">Under Lesson</label>
+                        <select id="edit-under-lesson" class="form-control" required>
+                            <option value="">-- Select Lesson --</option>
+                        </select>
+                    </div>
+
+                    <!-- Question Type (readonly, fixed) -->
+                    <div class="form-group">
+                        <label for="edit-question-type">Question Type</label>
+                        <input type="text" id="edit-question-type" class="form-control" readonly>
+                    </div>
+
+                    <!-- Instruction -->
+                    <div class="form-group" id="edit-instruction-field-group">
+                        <label for="edit-instruction-field">Instructions</label>
+                        <textarea id="edit-instruction-field" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <!-- Matching Type Section -->
+                    <div id="edit-matching-section" style="display: none; margin-top: 15px;">
+                        <label>Matching Pairs</label>
+                        <div id="edit-matching-pairs"></div>
+                        <!-- Buttons -->
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2"
+                            onclick="addEditMatchingPair()">
+                            <i class="fas fa-plus"></i> Add More
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger mt-2"
+                            onclick="removeEditMatchingPair()">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+
+                    <!-- Question Text -->
+                    <div id="edit-question-text-form" class="form-group">
+                        <label for="edit-question-text">Question</label>
+                        <textarea id="edit-question-text" class="form-control" rows="7" required></textarea>
+                    </div>
+
+                    <!-- Answer -->
+                    <div id="edit-answer-text-form" class="form-group">
+                        <label for="edit-question-answer">Answer</label>
+                        <input type="text" id="edit-question-answer" class="form-control" required>
+                    </div>
+
+                    <!-- Choices Section -->
+                    <div id="edit-choices-section" style="display: none;">
+                        <label>Choices</label>
+                        <textarea id="edit-choice1" class="form-control" placeholder="Choice 1" rows="3"></textarea>
+                        <textarea id="edit-choice2" class="form-control" placeholder="Choice 2" rows="3"></textarea>
+                        <textarea id="edit-choice3" class="form-control" placeholder="Choice 3" rows="3"></textarea>
+                        <textarea id="edit-choice4" class="form-control" placeholder="Choice 4" rows="3"></textarea>
+                    </div>
+
+                    <!-- Drag & Drop Section -->
+                    <div id="edit-dragdrop-section" style="display: none; margin-top: 15px;">
+                        <div class="form-group">
+                            <label for="edit-dragdrop-statement">Question Statement</label>
+                            <textarea id="edit-dragdrop-statement" class="form-control" rows="7"></textarea>
+                            <small class="form-text text-muted">Use '@' for blanks.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Answers</label>
+                            <div id="edit-dragdrop-answers"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Choices</label>
+                            <div id="edit-dragdrop-choices"></div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2"
+                                onclick="addEditDragDropChoice()">
+                                <i class="fas fa-plus"></i> Add Choice
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger mt-2"
+                                onclick="removeEditDragDropChoice()">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-dragdrop-complete">Complete Statement</label>
+                            <textarea id="edit-dragdrop-complete" class="form-control" rows="7" readonly></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Created By -->
+                    <div class="form-group">
+                        <label for="edit-created-by">Created By</label>
+                        <input type="text" id="edit-created-by" class="form-control" readonly>
+                    </div>
+
+                    <!-- Password Verification -->
+                    <div class="form-group" id="edit-admin-password-verification">
+                        <label for="edit-admin-password">Your Password (for verification)</label>
+                        <input type="password" id="edit-admin-password" class="form-control" required>
+                    </div>
+                </form>
             </div>
 
-            <div class="modal-answer-div">
-                <p id="modal-answer"></p>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditQuestionModal()">Cancel</button>
+                <button id="save-edit-question-btn" class="btn btn-primary" onclick="saveEditedQuestion()">Save
+                    Changes</button>
             </div>
-
         </div>
     </div>
 

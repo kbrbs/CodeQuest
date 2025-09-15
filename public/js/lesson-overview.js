@@ -209,7 +209,7 @@ chapterInput.addEventListener("change", async (e) => {
         if (chapterSnap.exists()) {
             const chapterData = chapterSnap.data();
             chapterTitle.textContent = chapterData.chapterTitle || "Untitled Chapter";
-            chapterDesc.textContent = chapterData.chapterDescription || chapterData.chapterDesc ||"No description available.";
+            chapterDesc.textContent = chapterData.chapterDescription || chapterData.chapterDesc || "No description available.";
         }
 
         // Load lessons
@@ -439,6 +439,11 @@ async function openAddChapterModal() {
 }
 
 async function closeAddChapterModal() {
+    // Clear form
+    chapterIdInput.value = "";
+    chapterTitleField.value = "";
+    chapterDescField.value = "";
+
     addChapterModal.style.display = "none";
 }
 
@@ -541,6 +546,12 @@ async function saveChapter() {
         }
 
         showAlert("Chapter and lessons saved successfully!", "success");
+
+        // Clear form
+        chapterIdInput.value = "";
+        chapterTitleField.value = "";
+        chapterDescField.value = "";
+
         closeAddChapterModal();
 
     } catch (err) {
@@ -557,6 +568,16 @@ async function openAddLessonModal() {
 }
 
 async function closeAddLessonModal() {
+    // Clear form
+    lessonIdInput.value = "";
+    lessonTitleInput.value = "";
+    lessonDescInput.value = "";
+    addLessonChapterInput.value = "";
+    lessonUpload.value = "";
+
+    status.textContent = "";
+    preview.innerHTML = "";
+
     addLessonModal.style.display = "none";
 }
 

@@ -52,7 +52,7 @@ const answerContainer = document.getElementById("answer-text-form")
 const questionContainer = document.getElementById("question-container")
 const contentContainer = document.getElementById("content-container")
 
-// Modal elements
+// View Question Modal
 const modal = document.getElementById("questionModal")
 const modalTitle = document.getElementById("modal-title")
 const modalQuestion = document.getElementById("modal-question")
@@ -64,6 +64,36 @@ const closeBtn = document.querySelector(".close-btn")
 const addQuestionModal = document.getElementById("add-question-modal")
 const instructionFieldGroup = document.getElementById("instruction-field-group")
 const instructionField = document.getElementById("instruction-field")
+
+// Edit Modal elements
+const editQuestionModal = document.getElementById("edit-question-modal")
+const editDocId = document.getElementById("edit-doc-id")
+const editQuestionId = document.getElementById("edit-question-id")
+const editUnderChapter = document.getElementById("edit-under-chapter")
+const editUnderLesson = document.getElementById("edit-under-lesson")
+const editQuestionType = document.getElementById("edit-question-type")
+const editInstructionField = document.getElementById("edit-instruction-field")
+const editQuestionForm = document.getElementById("edit-question-text-form")
+const editQuestionText = document.getElementById("edit-question-text")
+const editAnswerForm = document.getElementById("edit-answer-text-form")
+const editQuestionAnswer = document.getElementById("edit-question-answer")
+const editChoicesSection = document.getElementById("edit-choices-section")
+const editChoice1 = document.getElementById("edit-choice1")
+const editChoice2 = document.getElementById("edit-choice2")
+const editChoice3 = document.getElementById("edit-choice3")
+const editChoice4 = document.getElementById("edit-choice4")
+const editMatchingSection = document.getElementById("edit-matching-section")
+const editMatchingPairs = document.getElementById("edit-matching-pairs")
+const editDragdropSection = document.getElementById("edit-dragdrop-section")
+const editDragdropStatement = document.getElementById("edit-dragdrop-statement")
+const editDragdropAnswers = document.getElementById("edit-dragdrop-answers")
+const editDragdropChoices = document.getElementById("edit-dragdrop-choices")
+const editDragdropComplete = document.getElementById("edit-dragdrop-complete")
+const editCreatedBy = document.getElementById("edit-created-by")
+const editAdminPassword = document.getElementById("edit-admin-password")
+
+let currentQuestionData = null;
+
 
 // For Filtering
 let selectedChapterID = ""
@@ -297,7 +327,7 @@ async function loadQuestions() {
 
             questionContainer.appendChild(card)
             card.addEventListener("click", () => {
-                openModal(questionID, qData, docSnap.id) // ✅ pass docSnap.id
+                openModal(questionID, qData, docSnap.id)
             })
         }
 
@@ -814,6 +844,8 @@ async function openModal(questionID, qData, docId) {
         qData.status === "active" ? "green" : "gray"
 
     modal.style.display = "block"
+
+    currentQuestionData = { ...qData, id: docId, questionID };
 }
 
 // Close modal
@@ -824,36 +856,8 @@ closeBtn.onclick = () => (modal.style.display = "none")
 //     }
 // }
 
-async function generateUniqueQuestionID() {
-    let questionID;
-    let exists = true;
-
-    while (exists) {
-        // Generate a random number (6-digit for example)
-        const randomNum = Math.floor(1000 + Math.random() * 9000);
-        questionID = `CQ-${randomNum}`;
-
-        // Check Firestore if this ID already exists
-        const querySnapshot = await getDocs(
-            query(collection(db, "questions"), where("questionID", "==", questionID))
-        );
-
-        exists = !querySnapshot.empty; // true if found, regenerate if duplicate
-    }
-
-    return questionID;
-}
-
-function toggleAdminPasswordField() {
-    const passwordWrapper = document.getElementById("admin-password-verification");
-
-    if (adminPasswordPreference === "always") {
-        passwordWrapper.style.display = "block";
-    } else if (adminPasswordPreference === "once") {
-        passwordWrapper.style.display = "none";
-    }
-}
-
+// -----------------------------------------------------------------------------------
+// ADD QUESTION
 async function openAddQuestionModal() {
     console.log("Admin Predference:", adminPasswordPreference);
     addQuestionModal.style.display = "flex";
@@ -899,7 +903,6 @@ async function openAddQuestionModal() {
     toggleAdminPasswordField();
 }
 
-//   Close modal
 function closeAddQuestionModal() {
     document.getElementById("add-question-form").reset();
     addQuestionModal.style.display = "none";
@@ -907,7 +910,36 @@ function closeAddQuestionModal() {
     document.body.classList.remove("modal-open");
 }
 
-//   Load Chapters Dropdown (for add question modal)
+async function generateUniqueQuestionID() {
+    let questionID;
+    let exists = true;
+
+    while (exists) {
+        // Generate a random number (6-digit for example)
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        questionID = `CQ-${randomNum}`;
+
+        // Check Firestore if this ID already exists
+        const querySnapshot = await getDocs(
+            query(collection(db, "questions"), where("questionID", "==", questionID))
+        );
+
+        exists = !querySnapshot.empty; // true if found, regenerate if duplicate
+    }
+
+    return questionID;
+}
+
+function toggleAdminPasswordField() {
+    const passwordWrapper = document.getElementById("admin-password-verification");
+
+    if (adminPasswordPreference === "always") {
+        passwordWrapper.style.display = "block";
+    } else if (adminPasswordPreference === "once") {
+        passwordWrapper.style.display = "none";
+    }
+}
+
 async function loadChaptersForModal() {
     const chapterSelect = document.getElementById("under-chapter");
     const lessonSelect = document.getElementById("under-lesson");
@@ -981,7 +1013,6 @@ async function loadChaptersForModal() {
     }
 }
 
-// when chapter changes → load lessons
 document.getElementById("under-chapter").addEventListener("change", (e) => {
     const chapterId = e.target.value;
 
@@ -1006,7 +1037,6 @@ document.getElementById("under-chapter").addEventListener("change", (e) => {
     loadLessonsForModal(chapterId);
 });
 
-// Load Lessons Dropdown (inside modal) based on Chapter ID
 async function loadLessonsForModal(chapterId) {
     const lessonSelect = document.getElementById("under-lesson");
     const qTypeSelect = document.getElementById("add-question-type");
@@ -1083,7 +1113,7 @@ async function loadLessonsForModal(chapterId) {
     }
 }
 
-window.handleQuestionTypeChange = function () {
+async function handleQuestionTypeChange() {
     const type = document.getElementById("add-question-type").value;
     const choicesSection = document.getElementById("choices-section");
     const matchingSection = document.getElementById("matching-section");
@@ -1191,7 +1221,7 @@ window.handleQuestionTypeChange = function () {
             <input type="text" id="question-answer" class="form-control" required>
         `;
     }
-};
+}
 
 document.getElementById("question-answer")?.addEventListener("input", function () {
     const choice1 = document.getElementById("choice1");
@@ -1204,7 +1234,6 @@ document.getElementById("question-answer")?.addEventListener("input", function (
     }
 });
 
-/* --- Reset Matching Pairs --- */
 function resetMatchingPairs() {
     const container = document.getElementById("matching-pairs");
     container.innerHTML = ""; // Clear all existing pairs
@@ -1249,9 +1278,6 @@ function getMatchingPairs() {
     return { questions, answers };
 }
 
-// --- Drag & Drop helpers ---
-// Rebuild the Answers inputs to match the number of '@' in the statement.
-// Preserves existing typed values when possible.
 function rebuildDragdropAnswers() {
     const statementEl = document.getElementById("dragdrop-statement");
     const answersWrap = document.getElementById("dragdrop-answers");
@@ -1293,7 +1319,6 @@ function rebuildDragdropAnswers() {
     updateDragdropComplete(); // this will call syncAnswersToChoices()
 }
 
-// Build the Complete Statement by substituting each '@' with the corresponding answer
 function updateDragdropComplete() {
     const statementEl = document.getElementById("dragdrop-statement");
     const completeEl = document.getElementById("dragdrop-complete");
@@ -1345,7 +1370,6 @@ function syncAnswersToDnDChoices() {
     });
 }
 
-// When the question statement changes, regenerate answers and update complete text
 (function attachDragdropStatementListener() {
     const statementEl = document.getElementById("dragdrop-statement");
     if (!statementEl) return;
@@ -1356,7 +1380,6 @@ function syncAnswersToDnDChoices() {
     rebuildDragdropAnswers();
 })();
 
-// --- Choices add/remove ---
 function addDragDropChoice() {
     const choicesWrap = document.getElementById("dragdrop-choices");
     if (!choicesWrap) return;
@@ -1564,6 +1587,540 @@ function toggleDefaultSelectionVisibility() {
     }
 }
 
+// -----------------------------------------------------------------------------------
+// EDIT QUESTION
+
+document.getElementById("edit-question-btn").addEventListener("click", () => {
+    if (!currentQuestionData) return;
+    openEditQuestionModal(currentQuestionData);
+});
+
+async function openEditQuestionModal(questionData) {
+    editQuestionModal.style.display = "flex";
+
+    await loadChaptersForEditModal(questionData);
+
+    editDocId.value = questionData.id;
+    editQuestionId.value = questionData.questionID || "";
+    editUnderChapter.value = questionData.underChapter || "";
+    editUnderLesson.value = questionData.underLesson || "";
+    editQuestionType.value = formatQuestionType(questionData.questionType) || "Unknown Type";
+    editInstructionField.value = questionData.instruction || "";
+    
+    editCreatedBy.value = "Loading...";
+
+    if (questionData.createdBy) {
+        try {
+            const adminRef = doc(db, "admins", questionData.createdBy);
+            const adminSnap = await getDoc(adminRef);
+
+            if (adminSnap.exists()) {
+                const adminData = adminSnap.data();
+                // Prefer name, fallback to email, fallback to UID
+                editCreatedBy.value = adminData.name || adminData.email || questionData.createdBy;
+            } else {
+                editCreatedBy.value = questionData.createdBy; // fallback
+            }
+        } catch (err) {
+            console.error("❌ Error fetching admin info:", err);
+            editCreatedBy.value = questionData.createdBy;
+        }
+    }
+
+
+    // reset sections
+    editChoicesSection.style.display = "none";
+    editMatchingSection.style.display = "none";
+    editDragdropSection.style.display = "none";
+    editQuestionForm.style.display = "none";
+    editAnswerForm.style.display = "none";
+
+    // clear dynamic answer field
+    editAnswerForm.innerHTML = "";
+
+    // -------- TRUE / FALSE ----------
+    if (questionData.questionType === "trueOrFalse") {
+        editQuestionForm.style.display = "block";
+        editAnswerForm.style.display = "block";
+
+        const label = document.createElement("label");
+        label.setAttribute("for", "edit-question-answer");
+        label.textContent = "Answer";
+
+        const select = document.createElement("select");
+        select.id = "edit-question-answer";
+        select.className = "form-control";
+        select.required = true;
+        select.innerHTML = `
+            <option value="true">True</option>
+            <option value="false">False</option>
+        `;
+
+        editAnswerForm.appendChild(label);
+        editAnswerForm.appendChild(select);
+
+        editQuestionText.value = questionData.question || "";
+        select.value = questionData.answer || "";
+    }
+
+    // -------- MULTIPLE CHOICE ----------
+    else if (questionData.questionType === "multipleChoice") {
+        editChoicesSection.style.display = "block";
+        editQuestionForm.style.display = "block";
+        editAnswerForm.style.display = "block";
+
+        const label = document.createElement("label");
+        label.setAttribute("for", "edit-question-answer");
+        label.textContent = "Answer";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.id = "edit-question-answer";
+        input.className = "form-control";
+        input.required = true;
+
+        editAnswerForm.appendChild(label);
+        editAnswerForm.appendChild(input);
+
+        editQuestionText.value = questionData.question || "";
+        input.value = questionData.answer || "";
+
+        editChoice1.value = questionData.choices?.[0] || "";
+        editChoice1.readOnly = true;
+        editChoice2.value = questionData.choices?.[1] || "";
+        editChoice3.value = questionData.choices?.[2] || "";
+        editChoice4.value = questionData.choices?.[3] || "";
+
+        // keep answer linked to choice1
+        input.addEventListener("input", () => {
+            const value = input.value.trim();
+            editChoice1.value = value;
+        });
+    }
+
+    // -------- MATCHING TYPE ----------
+    else if (questionData.questionType === "matchingType") {
+        editMatchingSection.style.display = "block";
+        editQuestionForm.style.display = "none";
+        editAnswerForm.style.display = "none";
+
+        editMatchingPairs.innerHTML = "";
+        const questions = questionData.question || [];
+        const answers = questionData.answer || [];
+
+        if (questions.length === answers.length && questions.length > 0) {
+            for (let i = 0; i < questions.length; i++) {
+                const div = document.createElement("div");
+                div.className = "matching-pair d-flex mb-2";
+                div.innerHTML = `
+                    <textarea class="form-control mr-2 matching-question" rows="3">${questions[i]}</textarea>
+                    <textarea class="form-control matching-answer" rows="3">${answers[i]}</textarea>
+                `;
+                editMatchingPairs.appendChild(div);
+            }
+        } else {
+            editMatchingPairs.innerHTML = `<p style="color: red;">Invalid or missing matching data</p>`;
+        }
+    }
+
+    // -------- DEBUGGING ----------
+    else if (questionData.questionType === "debugging") {
+        editDragdropSection.style.display = "block";
+        editQuestionForm.style.display = "none";
+        editAnswerForm.style.display = "none";
+
+        editDragdropStatement.value = questionData.question || "";
+
+        // Prefill answers (based on @ count)
+        const answers = questionData.answer || [];
+        editDragdropAnswers.innerHTML = "";
+
+        const blanks = (editDragdropStatement.value.match(/@/g) || []).length;
+        for (let i = 0; i < blanks; i++) {
+            const row = document.createElement("div");
+            row.className = "d-flex mb-2";
+
+            const textarea = document.createElement("textarea");
+            textarea.className = "form-control dragdrop-answer";
+            textarea.placeholder = `Answer ${i + 1}`;
+            textarea.rows = 3;
+            textarea.value = answers[i] || "";
+
+            textarea.addEventListener("input", updateEditDragdropComplete);
+
+            row.appendChild(textarea);
+            editDragdropAnswers.appendChild(row);
+        }
+
+        // Prefill choices
+        editDragdropChoices.innerHTML = "";
+        const choices = questionData.choices || [];
+        choices.forEach((choice, idx) => {
+            const row = document.createElement("div");
+            row.className = "choice-item d-flex mb-2";
+
+            const textarea = document.createElement("textarea");
+            textarea.className = "form-control choice-input";
+            textarea.placeholder = `Choice ${idx + 1}`;
+            textarea.rows = 3;
+            textarea.value = choice;
+
+            if (answers.includes(choice)) {
+                textarea.readOnly = true;
+                row.classList.add("readonly-choice");
+            }
+
+            row.appendChild(textarea);
+            editDragdropChoices.appendChild(row);
+        });
+
+        // Ensure at least answers.length + 2 choices
+        const minChoices = answers.length + 2;
+        while (editDragdropChoices.querySelectorAll(".choice-input").length < minChoices) {
+            addEditDragDropChoice();
+        }
+
+        editDragdropComplete.value = questionData.completeStatement || "";
+
+        editDragdropStatement.removeEventListener("input", rebuildEditDragdropAnswers);
+        editDragdropStatement.addEventListener("input", rebuildEditDragdropAnswers);
+    }
+}
+
+async function loadChaptersForEditModal(questionData) {
+    const chapterSelect = document.getElementById("edit-under-chapter");
+    const lessonSelect = document.getElementById("edit-under-lesson");
+
+    chapterSelect.innerHTML = "";
+    lessonSelect.innerHTML = `<option value="" disabled selected>-- Select a Chapter First --</option>`;
+    lessonSelect.disabled = true;
+
+    try {
+        const chapterContentSnapshot = await getDocs(collection(db, "admins", currentUser.uid, "chapter-content"));
+
+        if (chapterContentSnapshot.empty) {
+            const option = document.createElement("option");
+            option.value = "";
+            option.textContent = "No Chapters Found";
+            option.disabled = true;
+            option.selected = true;
+            chapterSelect.appendChild(option);
+            chapterSelect.disabled = true;
+            return;
+        }
+
+        chapterSelect.disabled = false;
+
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "-- Select a Chapter --";
+        defaultOption.disabled = true;
+        chapterSelect.appendChild(defaultOption);
+
+        // Loop through chapters
+        for (const docSnap of chapterContentSnapshot.docs) {
+            const chapterData = docSnap.data();
+            const chapterID = chapterData.chapterID;
+
+            const chapterSnapshot = await getDoc(doc(db, "chapters", chapterID));
+            if (chapterSnapshot.exists()) {
+                const chapterTitle = chapterSnapshot.data().chapterTitle || `Chapter ${chapterID.replace(/\D+/g, '')}`;
+
+                const option = document.createElement("option");
+                option.value = docSnap.id; // doc ID in chapter-content
+                option.textContent = chapterTitle;
+
+                // ✅ Preselect if this matches questionData.underChapter
+                if (docSnap.id === questionData.underChapter) {
+                    option.selected = true;
+                    // ✅ Pass saved underLesson (which is the lessonLabel) instead of title
+                    await loadLessonsForEditModal(docSnap.id, questionData.underLesson);
+                    console.log("Chapter: ", docSnap.id);
+                    console.log("Lesson: ", questionData.underLesson);
+                }
+
+                chapterSelect.appendChild(option);
+            }
+        }
+
+        // Add listener for manual change (in case user edits)
+        chapterSelect.addEventListener("change", async (e) => {
+            const chapterId = e.target.value;
+            if (chapterId) {
+                await loadLessonsForEditModal(chapterId, null); // reset lesson prefill if user changes
+            } else {
+                lessonSelect.innerHTML = `<option value="" disabled selected>-- Select a Chapter First --</option>`;
+                lessonSelect.disabled = true;
+            }
+        });
+
+    } catch (error) {
+        console.error("Error loading chapters in edit modal:", error);
+    }
+}
+
+async function loadLessonsForEditModal(chapterId, prefillLessonLabel) {
+    const lessonSelect = document.getElementById("edit-under-lesson");
+
+    lessonSelect.innerHTML = "";
+    lessonSelect.disabled = true;
+
+    try {
+        const chapterContentRef = doc(db, "admins", currentUser.uid, "chapter-content", chapterId);
+        const chapterContentSnapshot = await getDoc(chapterContentRef);
+
+        if (!chapterContentSnapshot.exists()) {
+            lessonSelect.innerHTML = `<option value="" disabled selected>No Lessons Found</option>`;
+            return;
+        }
+
+        const chapterData = chapterContentSnapshot.data();
+        const chapterID = chapterData.chapterID;
+
+        const lessonContentSnapshot = await getDocs(collection(chapterContentRef, "lessons"));
+
+        if (lessonContentSnapshot.empty) {
+            lessonSelect.innerHTML = `<option value="" disabled selected>No Lessons Found</option>`;
+            return;
+        }
+
+        lessonSelect.disabled = false;
+
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "-- Select a Lesson --";
+        defaultOption.disabled = true;
+        lessonSelect.appendChild(defaultOption);
+
+        for (const docSnap of lessonContentSnapshot.docs) {
+            const lessonData = docSnap.data();
+            const lessonID = lessonData.lessonID;
+
+            const lessonSnapshot = await getDoc(doc(db, "chapters", chapterID, "lessons", lessonID));
+
+            if (lessonSnapshot.exists()) {
+                const lessonTitle = lessonSnapshot.data().lessonTitle || `Lesson ${lessonID.replace(/\D+/g, '')}`;
+
+                const option = document.createElement("option");
+                option.value = lessonData.lessonLabel; // ✅ value is lessonLabel
+                option.textContent = lessonTitle;
+
+                // ✅ Compare saved underLesson with lessonLabel, not title
+                if (lessonData.lessonLabel === prefillLessonLabel) {
+                    option.selected = true;
+                }
+
+                lessonSelect.appendChild(option);
+            }
+        }
+
+    } catch (error) {
+        console.error("Error loading lessons in edit modal:", error);
+    }
+}
+
+function closeEditQuestionModal() {
+    editQuestionModal.style.display = "none";
+}
+
+function addEditMatchingPair() {
+    const container = document.getElementById("edit-matching-pairs");
+    const pairCount = container.children.length + 1;
+
+    const div = document.createElement("div");
+    div.classList.add("matching-pair", "d-flex", "mb-2");
+
+    div.innerHTML = `
+        <textarea class="form-control mr-2 matching-question" placeholder="Question ${pairCount}" rows="3"></textarea>
+        <textarea class="form-control matching-answer" placeholder="Answer ${pairCount}" rows="3"></textarea>
+    `;
+
+    container.appendChild(div);
+}
+
+function removeEditMatchingPair() {
+    const container = document.getElementById("edit-matching-pairs");
+    if (container.children.length > 2) {
+        container.removeChild(container.lastElementChild);
+    } else if (container.children.length == 2) {
+        showAlert("You need to have at least 2 matching pairs!", "error");
+    }
+}
+
+function getEditMatchingPairs() {
+    const questions = [];
+    const answers = [];
+
+    editMatchingPairs.querySelectorAll(".matching-question").forEach(input => questions.push(input.value));
+    editMatchingPairs.querySelectorAll(".matching-answer").forEach(input => answers.push(input.value));
+
+    return { questions, answers };
+}
+
+function rebuildEditDragdropAnswers() {
+    const statement = editDragdropStatement.value || "";
+    const blanks = (statement.match(/@/g) || []).length;
+
+    const prevValues = Array.from(
+        editDragdropAnswers.querySelectorAll(".dragdrop-answer")
+    ).map(inp => inp.value);
+
+    editDragdropAnswers.innerHTML = "";
+    for (let i = 0; i < blanks; i++) {
+        const row = document.createElement("div");
+        row.className = "d-flex mb-2";
+
+        const textarea = document.createElement("textarea");
+        textarea.className = "form-control dragdrop-answer";
+        textarea.placeholder = `Answer ${i + 1}`;
+        textarea.rows = 3;
+        textarea.value = prevValues[i] || "";
+
+        textarea.addEventListener("input", updateEditDragdropComplete);
+
+        row.appendChild(textarea);
+        editDragdropAnswers.appendChild(row);
+    }
+
+    updateEditDragdropComplete();
+}
+
+function updateEditDragdropComplete() {
+    const statement = editDragdropStatement.value || "";
+    const answers = Array.from(editDragdropAnswers.querySelectorAll(".dragdrop-answer"))
+        .map(inp => inp.value || "");
+
+    const parts = statement.split("@");
+    let result = parts[0] || "";
+    for (let i = 0; i < answers.length; i++) {
+        result += answers[i] ? answers[i] : "_____";
+        result += parts[i + 1] || "";
+    }
+
+    editDragdropComplete.value = result;
+
+    syncEditAnswersToChoices();
+}
+
+function syncEditAnswersToChoices() {
+    const answers = Array.from(editDragdropAnswers.querySelectorAll(".dragdrop-answer"))
+        .map(inp => inp.value.trim())
+        .filter(val => val !== "");
+
+    // remove old readonly
+    editDragdropChoices.querySelectorAll(".readonly-choice").forEach(el => el.remove());
+
+    // append readonly answers
+    answers.forEach((ans, idx) => {
+        const row = document.createElement("div");
+        row.className = "choice-item d-flex mb-2 readonly-choice";
+
+        const textarea = document.createElement("textarea");
+        textarea.className = "form-control choice-input";
+        textarea.placeholder = `Answer ${idx + 1}`;
+        textarea.rows = 3;
+        textarea.value = ans;
+        textarea.readOnly = true;
+
+        row.appendChild(textarea);
+        editDragdropChoices.appendChild(row);
+    });
+}
+
+function addEditDragDropChoice() {
+    const count = editDragdropChoices.querySelectorAll(".choice-input").length + 1;
+
+    const row = document.createElement("div");
+    row.className = "choice-item d-flex mb-2";
+
+    const textarea = document.createElement("textarea");
+    textarea.className = "form-control choice-input";
+    textarea.placeholder = `Choice ${count}`;
+    textarea.rows = 3;
+
+    row.appendChild(textarea);
+    editDragdropChoices.appendChild(row);
+}
+
+function removeEditDragDropChoice() {
+    const allChoices = editDragdropChoices.querySelectorAll(".choice-item");
+    const editableChoices = Array.from(allChoices).filter(c => !c.classList.contains("readonly-choice"));
+
+    if (editableChoices.length > 2) {
+        editableChoices[editableChoices.length - 1].remove();
+    } else {
+        showAlert("You must have at least 2 editable choices in addition to the answers.", "warning");
+    }
+}
+
+async function saveEditedQuestion() {
+    const docId = editDocId.value; // 🔹 real Firestore ID
+
+    const updatedData = {
+        underChapter: editUnderChapter.value,
+        underLesson: editUnderLesson.value,
+        instruction: editInstructionField.value.trim(),
+        updatedAt: new Date()
+    };
+
+    // -------- MULTIPLE CHOICE / TRUE OR FALSE ----------
+    if (editChoicesSection.style.display === "block" || editAnswerForm.style.display === "block") {
+        updatedData.question = editQuestionText.value.trim();
+
+        // ✅ dynamically grab the answer field
+        const answerField = document.getElementById("edit-question-answer");
+        if (answerField) {
+            updatedData.answer = answerField.value.trim();
+        }
+
+        if (editChoicesSection.style.display === "block") {
+            updatedData.choices = [
+                editChoice1.value.trim(),
+                editChoice2.value.trim(),
+                editChoice3.value.trim(),
+                editChoice4.value.trim()
+            ].filter(c => c !== "");
+        }
+    }
+
+    // -------- MATCHING TYPE ----------
+    if (editMatchingSection.style.display === "block") {
+        const questions = [];
+        const answers = [];
+        editMatchingPairs.querySelectorAll(".matching-pair").forEach(pair => {
+            questions.push(pair.querySelector(".matching-question").value.trim());
+            answers.push(pair.querySelector(".matching-answer").value.trim());
+        });
+        updatedData.question = questions;
+        updatedData.answer = answers;
+    }
+
+    // -------- DEBUGGING ----------
+    if (editDragdropSection.style.display === "block") {
+        updatedData.question = editDragdropStatement.value.trim();
+        updatedData.completeStatement = editDragdropComplete.value.trim();
+        updatedData.answer = Array.from(document.querySelectorAll(".dragdrop-answer"))
+            .map(inp => inp.value.trim())
+            .filter(v => v !== "");
+        updatedData.choices = Array.from(document.querySelectorAll(".choice-input"))
+            .map(inp => inp.value.trim())
+            .filter(v => v !== "");
+    }
+
+    console.log("Saving edited question:", docId, updatedData);
+
+    try {
+        await updateDoc(doc(db, "questions", docId), updatedData);
+        showAlert("Question updated successfully!", "success");
+    } catch (error) {
+        console.error("❌ Error updating question:", error);
+        showAlert("Failed to update question.", "error");
+    }
+
+    closeEditQuestionModal();
+}
+
+// -------------------------------------------------------------------------------------
 async function refreshQuestionData() {
     await loadStats();
     await loadQuestions();
@@ -1610,6 +2167,7 @@ function closeAlert() {
 }
 
 window.verifyAndSetPreference = verifyAndSetPreference
+
 window.openAddQuestionModal = openAddQuestionModal
 window.closeAddQuestionModal = closeAddQuestionModal
 window.handleQuestionTypeChange = handleQuestionTypeChange
@@ -1619,6 +2177,15 @@ window.getMatchingPairs = getMatchingPairs
 window.addQuestion = addQuestion
 window.addDragDropChoice = addDragDropChoice
 window.removeDragDropChoice = removeDragDropChoice
+
+window.openEditQuestionModal = openEditQuestionModal
+window.closeEditQuestionModal = closeEditQuestionModal
+window.addEditMatchingPair = addEditMatchingPair
+window.removeEditMatchingPair = removeEditMatchingPair
+window.getEditMatchingPairs = getEditMatchingPairs
+window.saveEditedQuestion = saveEditedQuestion
+window.addEditDragDropChoice = addEditDragDropChoice
+window.removeEditDragDropChoice = removeEditDragDropChoice
 
 if (typeof window !== "undefined") {
     // Ensure DOM is loaded before attaching functions
@@ -1631,6 +2198,7 @@ if (typeof window !== "undefined") {
 
 function attachGlobalFunctions() {
     window.verifyAndSetPreference = verifyAndSetPreference
+
     window.openAddQuestionModal = openAddQuestionModal
     window.closeAddQuestionModal = closeAddQuestionModal
     window.handleQuestionTypeChange = handleQuestionTypeChange
@@ -1640,4 +2208,13 @@ function attachGlobalFunctions() {
     window.addQuestion = addQuestion
     window.addDragDropChoice = addDragDropChoice
     window.removeDragDropChoice = removeDragDropChoice
+
+    window.openEditQuestionModal = openEditQuestionModal
+    window.closeEditQuestionModal = closeEditQuestionModal
+    window.addEditMatchingPair = addEditMatchingPair
+    window.removeEditMatchingPair = removeEditMatchingPair
+    window.getEditMatchingPairs = getEditMatchingPairs
+    window.saveEditedQuestion = saveEditedQuestion
+    window.addEditDragDropChoice = addEditDragDropChoice
+    window.removeEditDragDropChoice = removeEditDragDropChoice
 }

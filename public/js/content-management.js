@@ -1018,17 +1018,20 @@ async function loadArchivedQuestions(activeIds = []) {
       let formattedQuestion = Array.isArray(qData.question)
         ? qData.question.join("\n\n")
         : qData.question || "No question text";
-
+      formattedQuestion = formattedQuestion.replace(/@/g, "____");
+      
       let formattedAnswer = Array.isArray(qData.answer)
         ? qData.answer.join(", ")
         : qData.answer || "No answer provided";
+
+      let formattedQType = formatQuestionType(qData.questionType);
 
       const card = document.createElement("div");
       card.classList.add("question-card");
       card.innerHTML = `
         <input type="checkbox" class="archived-checkbox" value="${docSnap.id}" style="display:none;">
         <h3 class="question-title">${qData.questionID || docSnap.id}</h3>
-        <p class="question-types"><strong>Type:</strong> ${qData.questionType}</p>
+        <p class="question-types"><strong>Type:</strong> ${formattedQType}</p>
         <br>
         <p class="question-items"><strong>Question:</strong></p>
         <pre><code>${formattedQuestion}</code></pre>
@@ -1094,17 +1097,20 @@ async function loadActiveQuestions(chapterId, type, subchapterId) {
       let formattedQuestion = Array.isArray(qData.question)
         ? qData.question.join("\n\n")
         : qData.question || "No question text";
+      formattedQuestion = formattedQuestion.replace(/@/g, "____");
 
       let formattedAnswer = Array.isArray(qData.answer)
         ? qData.answer.join(", ")
         : qData.answer || "No answer provided";
+
+      let formattedQType = formatQuestionType(qData.questionType);
 
       const card = document.createElement("div");
       card.classList.add("question-card");
       card.innerHTML = `
         <input type="checkbox" class="active-checkbox" value="${qId}" style="display:none;">
         <h3 class="question-title">${qData.questionID || qId}</h3>
-        <p class="question-types"><strong>Type:</strong> ${qData.questionType}</p>
+        <p class="question-types"><strong>Type:</strong> ${formattedQType}</p>
         <br>
         <p class="question-items"><strong>Question:</strong></p>
         <pre><code>${formattedQuestion}</code></pre>
