@@ -840,6 +840,20 @@
             background: #999;
         }
 
+        /* Modal Form and Loader Transition */
+
+        #add-question-form,
+        #edit-question-form {
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        #add-question-form.visible,
+        #edit-question-form.visible {
+            opacity: 1;
+        }
+
+
         /* Loading Spinner */
         .loading {
             text-align: center;
@@ -847,6 +861,15 @@
             color: #666;
             width: 100%;
             display: block;
+        }
+
+        .modal-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
         }
 
         .spinner {
@@ -1561,7 +1584,7 @@
                 <p id="modal-answer"></p>
             </div>
 
-            <div class="modal-edit-footer">
+            <div class="modal-edit-footer" id="edit-btn-container" style="display: none;">
                 <button class="modal-btn" id="edit-question-btn">
                     Edit Question
                 </button>
@@ -1578,8 +1601,13 @@
                 <!-- <button class="close" onclick="closeAddQuestionModal()">&times;</button> -->
             </div>
 
+            <div id="add-modal-loader" class="modal-loader">
+                <div class="spinner"></div>
+                <p>Loading...</p>
+            </div>
+
             <div class="modal-body">
-                <form id="add-question-form">
+                <form id="add-question-form" style="display: none;">
 
                     <!-- Question No (auto-generated) -->
                     <div class="form-group inline-label">
@@ -1754,6 +1782,11 @@
                 <h3 class="modal-title">Edit Question</h3>
             </div>
 
+            <div id="edit-modal-loader" class="modal-loader">
+                <div class="spinner"></div>
+                <p>Loading question data...</p>
+            </div>
+
             <div class="modal-body">
                 <form id="edit-question-form">
 
@@ -1864,7 +1897,7 @@
                     </div>
 
                     <!-- Password Verification -->
-                    <div class="form-group" id="edit-admin-password-verification">
+                    <div class="form-group" id="edit-admin-password-verification" style="display: none;">
                         <label for="edit-admin-password">Your Password (for verification)</label>
                         <input type="password" id="edit-admin-password" class="form-control" required>
                     </div>

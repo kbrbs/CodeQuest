@@ -59,6 +59,8 @@ const modalQuestion = document.getElementById("modal-question")
 const modalAnswer = document.getElementById("modal-answer")
 const modalStatus = document.getElementById("modal-status")
 const closeBtn = document.querySelector(".close-btn")
+const editBtn = document.getElementById("edit-question-btn")
+const editContainer = document.getElementById("edit-btn-container")
 
 // Add Question Modal
 const addQuestionModal = document.getElementById("add-question-modal")
@@ -846,6 +848,12 @@ async function openModal(questionID, qData, docId) {
     modal.style.display = "block"
 
     currentQuestionData = { ...qData, id: docId, questionID };
+
+    if (qData.createdBy === currentUser.uid) {
+        editContainer.style.display = "flex"
+    } else {
+        editContainer.style.display = "none"
+    }
 }
 
 // Close modal
@@ -859,48 +867,56 @@ closeBtn.onclick = () => (modal.style.display = "none")
 // -----------------------------------------------------------------------------------
 // ADD QUESTION
 async function openAddQuestionModal() {
-    console.log("Admin Predference:", adminPasswordPreference);
     addQuestionModal.style.display = "flex";
     document.body.classList.add("modal-open");
 
-    const createdByField = document.getElementById("created-by");
-    const user = auth.currentUser;
-    createdByField.value = user ? user.email : "Unknown Admin";
+    const loader = document.getElementById("add-modal-loader");
+    const form = document.getElementById("add-question-form");
+    loader.style.display = "flex";
+    form.style.display = "none";
 
+    try {
+        const createdByField = document.getElementById("created-by");
+        const user = auth.currentUser;
+        createdByField.value = user ? user.email : "Unknown Admin";
 
-    const uniqueID = await generateUniqueQuestionID();
-    document.getElementById("question-id").value = uniqueID;
+        const uniqueID = await generateUniqueQuestionID();
+        document.getElementById("question-id").value = uniqueID;
 
-    // Load chapter options
-    await loadChaptersForModal();
+        // Load chapter options
+        await loadChaptersForModal();
 
-    // Prefill Chapter & Lesson if saved in sessionStorage
-    const defaultChapter = sessionStorage.getItem("defaultChapter");
-    const defaultLesson = sessionStorage.getItem("defaultLesson");
+        // Prefill Chapter & Lesson if saved in sessionStorage
+        const defaultChapter = sessionStorage.getItem("defaultChapter");
+        const defaultLesson = sessionStorage.getItem("defaultLesson");
 
-    if (defaultChapter) {
-        const chapterSelect = document.getElementById("under-chapter");
-        chapterSelect.value = defaultChapter;
+        if (defaultChapter) {
+            const chapterSelect = document.getElementById("under-chapter");
+            chapterSelect.value = defaultChapter;
 
-        // Load lessons for that chapter
-        await loadLessonsForModal(defaultChapter);
+            // Load lessons for that chapter
+            await loadLessonsForModal(defaultChapter);
 
-        if (defaultLesson) {
-            const lessonSelect = document.getElementById("under-lesson");
-            lessonSelect.value = defaultLesson;
-
-            // Enable question type since lesson is set
-            document.getElementById("add-question-type").disabled = false;
+            if (defaultLesson) {
+                const lessonSelect = document.getElementById("under-lesson");
+                lessonSelect.value = defaultLesson;
+                document.getElementById("add-question-type").disabled = false;
+            }
+            document.getElementById("set-default-selection").checked = true;
         }
 
-        // ✅ Mark checkbox checked
-        document.getElementById("set-default-selection").checked = true;
+        toggleDefaultSelectionVisibility();
+        instructionFieldGroup.style.display = "none";
+        toggleAdminPasswordField();
+
+    } finally {
+        loader.style.display = "none";
+        form.style.display = "block";
+
+        setTimeout(() => {
+            form.classList.add("visible");
+        }, 50);
     }
-
-    toggleDefaultSelectionVisibility();
-
-    instructionFieldGroup.style.display = "none";
-    toggleAdminPasswordField();
 }
 
 function closeAddQuestionModal() {
@@ -1422,7 +1438,7 @@ async function addQuestion() {
     const adminPasswordEl = document.getElementById("admin-password");
 
     if (!underChapterEl || !underLessonEl || !questionTypeEl || !adminPasswordEl || !questionIdEl) {
-        showAlert("Form error: Some required fields are missing in the HTML.", "warning");
+        showAlert("Form error: Some required fields are missing.", "warning");
         return;
     }
 
@@ -1590,200 +1606,222 @@ function toggleDefaultSelectionVisibility() {
 // -----------------------------------------------------------------------------------
 // EDIT QUESTION
 
-document.getElementById("edit-question-btn").addEventListener("click", () => {
+editBtn.addEventListener("click", () => {
     if (!currentQuestionData) return;
     openEditQuestionModal(currentQuestionData);
 });
 
+function toggleEditAdminPasswordField() {
+    const passwordWrapper = document.getElementById("edit-admin-password-verification");
+    const pref = sessionStorage.getItem("adminPasswordPreference") || "never";
+
+    if (pref === "always") {
+        passwordWrapper.style.display = "block";
+    } else {
+        passwordWrapper.style.display = "none";
+    }
+}
+
 async function openEditQuestionModal(questionData) {
+    // Show loader, hide form
+    document.getElementById("edit-modal-loader").style.display = "flex";
+    document.getElementById("edit-question-form").style.display = "none";
+
+    // Disable Save button while loading
+    const saveBtn = document.getElementById("save-edit-question-btn");
+    if (saveBtn) saveBtn.disabled = true;
+
     editQuestionModal.style.display = "flex";
+    toggleEditAdminPasswordField();
 
-    await loadChaptersForEditModal(questionData);
+    try {
+        // ✅ Prefetch chapters/lessons
+        await loadChaptersForEditModal(questionData);
 
-    editDocId.value = questionData.id;
-    editQuestionId.value = questionData.questionID || "";
-    editUnderChapter.value = questionData.underChapter || "";
-    editUnderLesson.value = questionData.underLesson || "";
-    editQuestionType.value = formatQuestionType(questionData.questionType) || "Unknown Type";
-    editInstructionField.value = questionData.instruction || "";
-    
-    editCreatedBy.value = "Loading...";
+        // Prefill basic fields
+        editDocId.value = questionData.id;
+        editQuestionId.value = questionData.questionID || "";
+        editUnderChapter.value = questionData.underChapter || "";
+        editUnderLesson.value = questionData.underLesson || "";
+        editQuestionType.value = formatQuestionType(questionData.questionType) || "Unknown Type";
+        editInstructionField.value = questionData.instruction || "";
 
-    if (questionData.createdBy) {
-        try {
-            const adminRef = doc(db, "admins", questionData.createdBy);
-            const adminSnap = await getDoc(adminRef);
+        // Created By (fetch from admins db)
+        editCreatedBy.value = "Loading...";
+        if (questionData.createdBy) {
+            try {
+                const adminRef = doc(db, "admins", questionData.createdBy);
+                const adminSnap = await getDoc(adminRef);
 
-            if (adminSnap.exists()) {
-                const adminData = adminSnap.data();
-                // Prefer name, fallback to email, fallback to UID
-                editCreatedBy.value = adminData.name || adminData.email || questionData.createdBy;
+                if (adminSnap.exists()) {
+                    const adminData = adminSnap.data();
+                    editCreatedBy.value = adminData.name || adminData.email || questionData.createdBy;
+                } else {
+                    editCreatedBy.value = questionData.createdBy;
+                }
+            } catch (err) {
+                console.error("❌ Error fetching admin info:", err);
+                editCreatedBy.value = questionData.createdBy;
+            }
+        }
+
+        // Reset sections
+        editChoicesSection.style.display = "none";
+        editMatchingSection.style.display = "none";
+        editDragdropSection.style.display = "none";
+        editQuestionForm.style.display = "none";
+        editAnswerForm.style.display = "none";
+        editAnswerForm.innerHTML = "";
+
+        // ✅ Populate fields based on type
+        if (questionData.questionType === "trueOrFalse") {
+            editQuestionForm.style.display = "block";
+            editAnswerForm.style.display = "block";
+
+            const label = document.createElement("label");
+            label.setAttribute("for", "edit-question-answer");
+            label.textContent = "Answer";
+
+            const select = document.createElement("select");
+            select.id = "edit-question-answer";
+            select.className = "form-control";
+            select.required = true;
+            select.innerHTML = `
+                <option value="true">True</option>
+                <option value="false">False</option>
+            `;
+
+            editAnswerForm.appendChild(label);
+            editAnswerForm.appendChild(select);
+
+            editQuestionText.value = questionData.question || "";
+            select.value = questionData.answer || "";
+        }
+
+        else if (questionData.questionType === "multipleChoice") {
+            editChoicesSection.style.display = "block";
+            editQuestionForm.style.display = "block";
+            editAnswerForm.style.display = "block";
+
+            const label = document.createElement("label");
+            label.setAttribute("for", "edit-question-answer");
+            label.textContent = "Answer";
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.id = "edit-question-answer";
+            input.className = "form-control";
+            input.required = true;
+
+            editAnswerForm.appendChild(label);
+            editAnswerForm.appendChild(input);
+
+            editQuestionText.value = questionData.question || "";
+            input.value = questionData.answer || "";
+
+            editChoice1.value = questionData.choices?.[0] || "";
+            editChoice1.readOnly = true;
+            editChoice2.value = questionData.choices?.[1] || "";
+            editChoice3.value = questionData.choices?.[2] || "";
+            editChoice4.value = questionData.choices?.[3] || "";
+
+            input.addEventListener("input", () => {
+                editChoice1.value = input.value.trim();
+            });
+        }
+
+        else if (questionData.questionType === "matchingType") {
+            editMatchingSection.style.display = "block";
+            editMatchingPairs.innerHTML = "";
+
+            const questions = questionData.question || [];
+            const answers = questionData.answer || [];
+
+            if (questions.length === answers.length && questions.length > 0) {
+                for (let i = 0; i < questions.length; i++) {
+                    const div = document.createElement("div");
+                    div.className = "matching-pair d-flex mb-2";
+                    div.innerHTML = `
+                        <textarea class="form-control mr-2 matching-question" rows="3">${questions[i]}</textarea>
+                        <textarea class="form-control matching-answer" rows="3">${answers[i]}</textarea>
+                    `;
+                    editMatchingPairs.appendChild(div);
+                }
             } else {
-                editCreatedBy.value = questionData.createdBy; // fallback
+                editMatchingPairs.innerHTML = `<p style="color: red;">Invalid or missing matching data</p>`;
             }
-        } catch (err) {
-            console.error("❌ Error fetching admin info:", err);
-            editCreatedBy.value = questionData.createdBy;
-        }
-    }
-
-
-    // reset sections
-    editChoicesSection.style.display = "none";
-    editMatchingSection.style.display = "none";
-    editDragdropSection.style.display = "none";
-    editQuestionForm.style.display = "none";
-    editAnswerForm.style.display = "none";
-
-    // clear dynamic answer field
-    editAnswerForm.innerHTML = "";
-
-    // -------- TRUE / FALSE ----------
-    if (questionData.questionType === "trueOrFalse") {
-        editQuestionForm.style.display = "block";
-        editAnswerForm.style.display = "block";
-
-        const label = document.createElement("label");
-        label.setAttribute("for", "edit-question-answer");
-        label.textContent = "Answer";
-
-        const select = document.createElement("select");
-        select.id = "edit-question-answer";
-        select.className = "form-control";
-        select.required = true;
-        select.innerHTML = `
-            <option value="true">True</option>
-            <option value="false">False</option>
-        `;
-
-        editAnswerForm.appendChild(label);
-        editAnswerForm.appendChild(select);
-
-        editQuestionText.value = questionData.question || "";
-        select.value = questionData.answer || "";
-    }
-
-    // -------- MULTIPLE CHOICE ----------
-    else if (questionData.questionType === "multipleChoice") {
-        editChoicesSection.style.display = "block";
-        editQuestionForm.style.display = "block";
-        editAnswerForm.style.display = "block";
-
-        const label = document.createElement("label");
-        label.setAttribute("for", "edit-question-answer");
-        label.textContent = "Answer";
-
-        const input = document.createElement("input");
-        input.type = "text";
-        input.id = "edit-question-answer";
-        input.className = "form-control";
-        input.required = true;
-
-        editAnswerForm.appendChild(label);
-        editAnswerForm.appendChild(input);
-
-        editQuestionText.value = questionData.question || "";
-        input.value = questionData.answer || "";
-
-        editChoice1.value = questionData.choices?.[0] || "";
-        editChoice1.readOnly = true;
-        editChoice2.value = questionData.choices?.[1] || "";
-        editChoice3.value = questionData.choices?.[2] || "";
-        editChoice4.value = questionData.choices?.[3] || "";
-
-        // keep answer linked to choice1
-        input.addEventListener("input", () => {
-            const value = input.value.trim();
-            editChoice1.value = value;
-        });
-    }
-
-    // -------- MATCHING TYPE ----------
-    else if (questionData.questionType === "matchingType") {
-        editMatchingSection.style.display = "block";
-        editQuestionForm.style.display = "none";
-        editAnswerForm.style.display = "none";
-
-        editMatchingPairs.innerHTML = "";
-        const questions = questionData.question || [];
-        const answers = questionData.answer || [];
-
-        if (questions.length === answers.length && questions.length > 0) {
-            for (let i = 0; i < questions.length; i++) {
-                const div = document.createElement("div");
-                div.className = "matching-pair d-flex mb-2";
-                div.innerHTML = `
-                    <textarea class="form-control mr-2 matching-question" rows="3">${questions[i]}</textarea>
-                    <textarea class="form-control matching-answer" rows="3">${answers[i]}</textarea>
-                `;
-                editMatchingPairs.appendChild(div);
-            }
-        } else {
-            editMatchingPairs.innerHTML = `<p style="color: red;">Invalid or missing matching data</p>`;
-        }
-    }
-
-    // -------- DEBUGGING ----------
-    else if (questionData.questionType === "debugging") {
-        editDragdropSection.style.display = "block";
-        editQuestionForm.style.display = "none";
-        editAnswerForm.style.display = "none";
-
-        editDragdropStatement.value = questionData.question || "";
-
-        // Prefill answers (based on @ count)
-        const answers = questionData.answer || [];
-        editDragdropAnswers.innerHTML = "";
-
-        const blanks = (editDragdropStatement.value.match(/@/g) || []).length;
-        for (let i = 0; i < blanks; i++) {
-            const row = document.createElement("div");
-            row.className = "d-flex mb-2";
-
-            const textarea = document.createElement("textarea");
-            textarea.className = "form-control dragdrop-answer";
-            textarea.placeholder = `Answer ${i + 1}`;
-            textarea.rows = 3;
-            textarea.value = answers[i] || "";
-
-            textarea.addEventListener("input", updateEditDragdropComplete);
-
-            row.appendChild(textarea);
-            editDragdropAnswers.appendChild(row);
         }
 
-        // Prefill choices
-        editDragdropChoices.innerHTML = "";
-        const choices = questionData.choices || [];
-        choices.forEach((choice, idx) => {
-            const row = document.createElement("div");
-            row.className = "choice-item d-flex mb-2";
+        else if (questionData.questionType === "debugging") {
+            editDragdropSection.style.display = "block";
+            editDragdropStatement.value = questionData.question || "";
 
-            const textarea = document.createElement("textarea");
-            textarea.className = "form-control choice-input";
-            textarea.placeholder = `Choice ${idx + 1}`;
-            textarea.rows = 3;
-            textarea.value = choice;
+            const answers = questionData.answer || [];
+            editDragdropAnswers.innerHTML = "";
+            const blanks = (editDragdropStatement.value.match(/@/g) || []).length;
 
-            if (answers.includes(choice)) {
-                textarea.readOnly = true;
-                row.classList.add("readonly-choice");
+            for (let i = 0; i < blanks; i++) {
+                const row = document.createElement("div");
+                row.className = "d-flex mb-2";
+
+                const textarea = document.createElement("textarea");
+                textarea.className = "form-control dragdrop-answer";
+                textarea.placeholder = `Answer ${i + 1}`;
+                textarea.rows = 3;
+                textarea.value = answers[i] || "";
+                textarea.addEventListener("input", updateEditDragdropComplete);
+
+                row.appendChild(textarea);
+                editDragdropAnswers.appendChild(row);
             }
 
-            row.appendChild(textarea);
-            editDragdropChoices.appendChild(row);
-        });
+            editDragdropChoices.innerHTML = "";
+            const choices = questionData.choices || [];
+            choices.forEach((choice, idx) => {
+                const row = document.createElement("div");
+                row.className = "choice-item d-flex mb-2";
 
-        // Ensure at least answers.length + 2 choices
-        const minChoices = answers.length + 2;
-        while (editDragdropChoices.querySelectorAll(".choice-input").length < minChoices) {
-            addEditDragDropChoice();
+                const textarea = document.createElement("textarea");
+                textarea.className = "form-control choice-input";
+                textarea.placeholder = `Choice ${idx + 1}`;
+                textarea.rows = 3;
+                textarea.value = choice;
+
+                if (answers.includes(choice)) {
+                    textarea.readOnly = true;
+                    row.classList.add("readonly-choice");
+                }
+
+                row.appendChild(textarea);
+                editDragdropChoices.appendChild(row);
+            });
+
+            const minChoices = answers.length + 2;
+            while (editDragdropChoices.querySelectorAll(".choice-input").length < minChoices) {
+                addEditDragDropChoice();
+            }
+
+            editDragdropComplete.value = questionData.completeStatement || "";
+
+            editDragdropStatement.removeEventListener("input", rebuildEditDragdropAnswers);
+            editDragdropStatement.addEventListener("input", rebuildEditDragdropAnswers);
         }
+    } catch (err) {
+        console.error("❌ Error loading question for edit:", err);
+        showAlert("Failed to load question.", "error");
+    } finally {
+        // Hide loader, show form
+        document.getElementById("edit-modal-loader").style.display = "none";
+        const editForm = document.getElementById("edit-question-form");
+        editForm.style.display = "block";
 
-        editDragdropComplete.value = questionData.completeStatement || "";
+        // Trigger fade-in
+        setTimeout(() => {
+            editForm.classList.add("visible");
+        }, 50);
 
-        editDragdropStatement.removeEventListener("input", rebuildEditDragdropAnswers);
-        editDragdropStatement.addEventListener("input", rebuildEditDragdropAnswers);
+        // Re-enable Save button
+        if (saveBtn) saveBtn.disabled = false;
     }
 }
 
@@ -2056,30 +2094,77 @@ function removeEditDragDropChoice() {
 async function saveEditedQuestion() {
     const docId = editDocId.value; // 🔹 real Firestore ID
 
+    // Elements
+    const underChapterEl = editUnderChapter;
+    const underLessonEl = editUnderLesson;
+    const instructionsEl = editInstructionField;
+    const adminPasswordEl = document.getElementById("edit-admin-password");
+
+    if (!underChapterEl || !underLessonEl || !instructionsEl) {
+        showAlert("Form error: Some required fields are missing.", "warning");
+        return;
+    }
+
+    const underChapter = underChapterEl.value;
+    const underLesson = underLessonEl.value;
+    const instruction = instructionsEl.value.trim();
+
+    // 🔹 Admin password preference check
+    const adminPasswordPreference = sessionStorage.getItem("adminPasswordPreference") || "never";
+    if (adminPasswordPreference === "always") {
+        const adminPassword = adminPasswordEl ? adminPasswordEl.value.trim() : "";
+        if (!adminPassword) {
+            showAlert("Admin password is required.", "warning");
+            return;
+        }
+        const isValidPassword = await verifyAdminPassword(adminPassword);
+        if (!isValidPassword) {
+            showAlert("Incorrect admin password.", "error");
+            return;
+        }
+    }
+
+    // ✅ Required field validation
+    if (!underChapter || !underLesson) {
+        showAlert("Please fill in all required fields.", "warning");
+        return;
+    }
+
     const updatedData = {
-        underChapter: editUnderChapter.value,
-        underLesson: editUnderLesson.value,
-        instruction: editInstructionField.value.trim(),
-        updatedAt: new Date()
+        underChapter,
+        underLesson,
+        instruction,
+        updatedAt: new Date(),
+        updatedBy: sessionStorage.getItem("adminUID") || "unknown-admin",
+        adminPasswordPreference
     };
 
     // -------- MULTIPLE CHOICE / TRUE OR FALSE ----------
     if (editChoicesSection.style.display === "block" || editAnswerForm.style.display === "block") {
-        updatedData.question = editQuestionText.value.trim();
-
-        // ✅ dynamically grab the answer field
+        const question = editQuestionText.value.trim();
         const answerField = document.getElementById("edit-question-answer");
-        if (answerField) {
-            updatedData.answer = answerField.value.trim();
+
+        if (!question || !answerField || !answerField.value.trim()) {
+            showAlert("Question and answer are required.", "warning");
+            return;
         }
 
+        updatedData.question = question;
+        updatedData.answer = answerField.value.trim();
+
         if (editChoicesSection.style.display === "block") {
-            updatedData.choices = [
+            const choices = [
                 editChoice1.value.trim(),
                 editChoice2.value.trim(),
                 editChoice3.value.trim(),
                 editChoice4.value.trim()
             ].filter(c => c !== "");
+
+            if (choices.length < 2) {
+                showAlert("Please provide at least 2 choices.", "warning");
+                return;
+            }
+            updatedData.choices = choices;
         }
     }
 
@@ -2088,23 +2173,43 @@ async function saveEditedQuestion() {
         const questions = [];
         const answers = [];
         editMatchingPairs.querySelectorAll(".matching-pair").forEach(pair => {
-            questions.push(pair.querySelector(".matching-question").value.trim());
-            answers.push(pair.querySelector(".matching-answer").value.trim());
+            const q = pair.querySelector(".matching-question").value.trim();
+            const a = pair.querySelector(".matching-answer").value.trim();
+            if (q && a) {
+                questions.push(q);
+                answers.push(a);
+            }
         });
+
+        if (questions.length < 2 || answers.length < 2) {
+            showAlert("Matching type must have at least 2 pairs.", "warning");
+            return;
+        }
+
         updatedData.question = questions;
         updatedData.answer = answers;
     }
 
     // -------- DEBUGGING ----------
     if (editDragdropSection.style.display === "block") {
-        updatedData.question = editDragdropStatement.value.trim();
-        updatedData.completeStatement = editDragdropComplete.value.trim();
-        updatedData.answer = Array.from(document.querySelectorAll(".dragdrop-answer"))
+        const statement = editDragdropStatement.value.trim();
+        const complete = editDragdropComplete.value.trim();
+        const answers = Array.from(document.querySelectorAll(".dragdrop-answer"))
             .map(inp => inp.value.trim())
             .filter(v => v !== "");
-        updatedData.choices = Array.from(document.querySelectorAll(".choice-input"))
+        const choices = Array.from(document.querySelectorAll(".choice-input"))
             .map(inp => inp.value.trim())
             .filter(v => v !== "");
+
+        if (!statement || answers.length === 0 || choices.length < 2) {
+            showAlert("Debugging requires statement, answers, and at least 2 choices.", "warning");
+            return;
+        }
+
+        updatedData.question = statement;
+        updatedData.completeStatement = complete;
+        updatedData.answer = answers;
+        updatedData.choices = choices;
     }
 
     console.log("Saving edited question:", docId, updatedData);
@@ -2117,7 +2222,11 @@ async function saveEditedQuestion() {
         showAlert("Failed to update question.", "error");
     }
 
+    modal.style.display = "none"
     closeEditQuestionModal();
+    setTimeout(() => {
+        refreshQuestionData();
+    }, 1500);
 }
 
 // -------------------------------------------------------------------------------------

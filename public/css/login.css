@@ -44,6 +44,7 @@ body::before {
 
 /* Transform login form to centered card */
 .login-form {
+    height: 90%;
     width: 100%;
     max-width: 550px;
     background: rgba(255, 255, 255, 0.15);
@@ -58,7 +59,7 @@ body::before {
     position: relative;
     z-index: 3;
     margin: 2rem;
-    padding: 3rem 2.5rem;
+    padding: 2rem 2rem;
     overflow: hidden;
 }
 
@@ -94,13 +95,11 @@ body::before {
 }
 
 .login-form h1 {
-    font-size: 1.8rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.2em;
     font-weight: 600;
     letter-spacing: 0.5px;
     text-align: center;
     color: #333;
-    padding: 0.5rem;
     border-radius: 8px;
 }
 
@@ -110,8 +109,7 @@ body::before {
     text-align: center;
     color: #333;
     font-size: 0.9rem;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+    margin-top: 0.5rem;
     line-height: 1.4;
     padding: 0.5rem;
     border-radius: 8px;
@@ -237,7 +235,6 @@ body::before {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 20px;
 }
 .error-message {
     color: #dc3545;
@@ -298,6 +295,7 @@ body::before {
     }
     
     .login-form {
+        height: auto;
         max-width: 100%;
         padding: 2rem 1.5rem;
         margin: 1rem;
